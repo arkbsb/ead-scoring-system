@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Lead } from '@/lib/types';
 import { generateMockLeads } from '@/lib/mock-data';
 import { fetchGoogleSheetData, parseSheetData, GoogleSheetConfig } from '@/lib/google-sheets';
+import { useAuth } from './AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface LeadsContextType {
     leads: Lead[];
@@ -10,9 +12,9 @@ interface LeadsContextType {
     launches: GoogleSheetConfig[];
     activeLaunchId: string | null;
     activeLaunch: GoogleSheetConfig | null;
-    addLaunch: (config: GoogleSheetConfig) => void;
-    updateLaunch: (config: GoogleSheetConfig) => void;
-    removeLaunch: (id: string) => void;
+    addLaunch: (config: GoogleSheetConfig) => Promise<void>;
+    updateLaunch: (config: GoogleSheetConfig) => Promise<void>;
+    removeLaunch: (id: string) => Promise<void>;
     selectLaunch: (id: string) => Promise<void>;
     refresh: () => Promise<void>;
 }
@@ -20,14 +22,12 @@ interface LeadsContextType {
 const LeadsContext = createContext<LeadsContextType | undefined>(undefined);
 
 export function LeadsProvider({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const [launches, setLaunches] = useState<GoogleSheetConfig[]>(() => {
-        const saved = localStorage.getItem('launches');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [launches, setLaunches] = useState<GoogleSheetConfig[]>([]);
 
     const [activeLaunchId, setActiveLaunchId] = useState<string | null>(() => {
         return localStorage.getItem('activeLaunchId');
@@ -35,9 +35,41 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
 
     const activeLaunch = launches.find(l => l.id === activeLaunchId) || null;
 
+    // Fetch launches from Supabase when user logs in
     useEffect(() => {
-        localStorage.setItem('launches', JSON.stringify(launches));
-    }, [launches]);
+        if (user) {
+            fetchLaunches();
+        } else {
+            // Fallback to local storage if not logged in (or clear it)
+            const saved = localStorage.getItem('launches');
+            setLaunches(saved ? JSON.parse(saved) : []);
+        }
+    }, [user]);
+
+    const fetchLaunches = async () => {
+        if (!user) return;
+        const { data, error } = await supabase
+            .from('launches')
+            .select('*')
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error('Error fetching launches:', error);
+            return;
+        }
+
+        // Map snake_case DB fields to camelCase TS interface if needed
+        // Assuming DB columns are: id, name, spreadsheet_id, sheet_name, access_token
+        const mappedLaunches: GoogleSheetConfig[] = data.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            spreadsheetId: item.spreadsheet_id,
+            sheetName: item.sheet_name,
+            accessToken: item.access_token
+        }));
+
+        setLaunches(mappedLaunches);
+    };
 
     useEffect(() => {
         if (activeLaunchId) {
@@ -47,7 +79,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem('activeLaunchId');
             setLeads(generateMockLeads(50));
         }
-    }, [activeLaunchId]);
+    }, [activeLaunchId, launches]); // Added launches to dependency array to ensure refresh uses latest config
 
     const refresh = async () => {
         const currentLaunch = launches.find(l => l.id === activeLaunchId);
@@ -71,22 +103,75 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const addLaunch = (config: GoogleSheetConfig) => {
-        setLaunches(prev => [...prev, config]);
+    const addLaunch = async (config: GoogleSheetConfig) => {
+        if (user) {
+            const { error } = await supabase.from('launches').insert({
+                id: config.id,
+                user_id: user.id,
+                name: config.name,
+                spreadsheet_id: config.spreadsheetId,
+                sheet_name: config.sheetName,
+                access_token: config.accessToken
+            });
+
+            if (error) {
+                console.error('Error adding launch:', error);
+                setError('Failed to save launch to cloud');
+                return;
+            }
+            await fetchLaunches();
+        } else {
+            const newLaunches = [...launches, config];
+            setLaunches(newLaunches);
+            localStorage.setItem('launches', JSON.stringify(newLaunches));
+        }
+
         if (!activeLaunchId) {
             selectLaunch(config.id);
         }
     };
 
-    const updateLaunch = (config: GoogleSheetConfig) => {
-        setLaunches(prev => prev.map(l => l.id === config.id ? config : l));
+    const updateLaunch = async (config: GoogleSheetConfig) => {
+        if (user) {
+            const { error } = await supabase.from('launches').update({
+                name: config.name,
+                spreadsheet_id: config.spreadsheetId,
+                sheet_name: config.sheetName,
+                access_token: config.accessToken
+            }).eq('id', config.id);
+
+            if (error) {
+                console.error('Error updating launch:', error);
+                setError('Failed to update launch in cloud');
+                return;
+            }
+            await fetchLaunches();
+        } else {
+            const newLaunches = launches.map(l => l.id === config.id ? config : l);
+            setLaunches(newLaunches);
+            localStorage.setItem('launches', JSON.stringify(newLaunches));
+        }
+
         if (activeLaunchId === config.id) {
             refresh();
         }
     };
 
-    const removeLaunch = (id: string) => {
-        setLaunches(prev => prev.filter(l => l.id !== id));
+    const removeLaunch = async (id: string) => {
+        if (user) {
+            const { error } = await supabase.from('launches').delete().eq('id', id);
+            if (error) {
+                console.error('Error deleting launch:', error);
+                setError('Failed to delete launch from cloud');
+                return;
+            }
+            await fetchLaunches();
+        } else {
+            const newLaunches = launches.filter(l => l.id !== id);
+            setLaunches(newLaunches);
+            localStorage.setItem('launches', JSON.stringify(newLaunches));
+        }
+
         if (activeLaunchId === id) {
             setActiveLaunchId(null);
             setLeads(generateMockLeads(50));
@@ -95,7 +180,6 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
 
     const selectLaunch = async (id: string) => {
         setActiveLaunchId(id);
-        // refresh is triggered by useEffect
     };
 
     return (
