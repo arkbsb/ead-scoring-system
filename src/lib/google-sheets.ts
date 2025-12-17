@@ -1,12 +1,25 @@
 import { Lead } from './types';
 import { calculateScore, getSegmentation } from './scoring';
 
+export interface ScoreRule {
+    value: string;
+    score: number;
+}
+
+export interface ColumnMapping {
+    rowIndex: number; // The index of the column in the sheet (0, 1, 2...)
+    headerName: string; // The text in the header row
+    targetField: keyof Lead | 'ignore'; // The internal field it maps to
+    scoreRules?: ScoreRule[]; // Points configuration
+}
+
 export interface GoogleSheetConfig {
     id: string;
     name: string; // Launch Name
     spreadsheetId: string;
     sheetName: string;
     accessToken?: string;
+    mappings?: ColumnMapping[];
 }
 
 import * as XLSX from 'xlsx';
@@ -79,49 +92,78 @@ const parseDate = (dateStr: string): string => {
     return new Date().toISOString(); // Fallback
 };
 
-export const parseSheetData = (data: string[][]): Lead[] => {
+export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Lead[] => {
     // Assuming the first row is header, skip it
     const rows = data.slice(1);
 
     return rows.map((row, index) => {
-        // Map columns based on the fixed structure provided in requirements
-        // 1. Nome/Email, 2. Timestamp, 3. Idade, ...
-        const lead: Partial<Lead> = {
+        // Default base
+        let lead: Partial<Lead> = {
             id: `sheet-${index}`,
-            timestamp: parseDate(row[0]), // Parse the timestamp safely
-            name: row[28] || row[1] || '', // Column AC is primary Name, fallback to B (Email)
-            email: row[1] || '',     // Column B is Email
-            age: row[2] || '',
-            hasChildren: row[3] || '',
-            gender: row[4] || '',
-            education: row[5] || '',
-            maritalStatus: row[6] || '',
-            followTime: row[7] || '',
-            hasStore: row[8] || '',
-            storeType: row[9] || '',
-            segment: row[10] || '',
-            difficulty: row[11] || '',
-            revenue: row[12] || '',
-            storeTime: row[13] || '',
-            management: row[14] || '',
-            digitalPresence: row[15] || '',
-            teamStructure: row[16] || '',
-            sales: row[17] || '',
-            dream: row[18] || '',
-            isStudent: row[19] || '',
-            challengeDifficulty: row[20] || '',
-            question: row[21] || '',
-
-            // UTM Params
-            utm_source: row[22] || '', // Column W
-            utm_medium: row[23] || '', // Column X (Assumed)
-            utm_content: row[24] || '', // Column Y (Assumed)
-
-            // Personal Info (Updated Mappings)
-            whatsapp: row[29] || '', // Column AD
+            timestamp: new Date().toISOString(),
         };
+        let score = 0;
 
-        const score = calculateScore(lead);
+        // Dynamic Mapping Path
+        if (config?.mappings && config.mappings.length > 0) {
+            config.mappings.forEach(mapping => {
+                if (mapping.targetField === 'ignore') return;
+
+                const cellValue = row[mapping.rowIndex];
+                if (cellValue !== undefined) {
+                    // Assign to Lead field
+                    (lead as any)[mapping.targetField] = cellValue;
+
+                    // Calculate Score
+                    if (mapping.scoreRules && mapping.scoreRules.length > 0) {
+                        const rule = mapping.scoreRules.find(r => r.value.trim() === cellValue.trim());
+                        if (rule) {
+                            score += rule.score;
+                        }
+                    }
+                }
+            });
+
+            // Parse timestamp if it was mapped
+            if (lead.timestamp) {
+                lead.timestamp = parseDate(lead.timestamp);
+            }
+
+        } else {
+            // Legacy / Hardcoded Path (Fallback)
+            lead = {
+                id: `sheet-${index}`,
+                timestamp: parseDate(row[0]),
+                name: row[28] || row[1] || '',
+                email: row[1] || '',
+                age: row[2] || '',
+                hasChildren: row[3] || '',
+                gender: row[4] || '',
+                education: row[5] || '',
+                maritalStatus: row[6] || '',
+                followTime: row[7] || '',
+                hasStore: row[8] || '',
+                storeType: row[9] || '',
+                segment: row[10] || '',
+                difficulty: row[11] || '',
+                revenue: row[12] || '',
+                storeTime: row[13] || '',
+                management: row[14] || '',
+                digitalPresence: row[15] || '',
+                teamStructure: row[16] || '',
+                sales: row[17] || '',
+                dream: row[18] || '',
+                isStudent: row[19] || '',
+                challengeDifficulty: row[20] || '',
+                question: row[21] || '',
+                utm_source: row[22] || '',
+                utm_medium: row[23] || '',
+                utm_content: row[24] || '',
+                whatsapp: row[29] || '',
+            };
+
+            score = calculateScore(lead);
+        }
 
         return {
             ...lead,

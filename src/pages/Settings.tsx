@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GoogleSheetConfig } from '@/lib/google-sheets';
-import { AlertCircle, CheckCircle2, Plus, Trash2, Edit2, Play } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Trash2, Edit2, Play, ArrowRight } from 'lucide-react';
+import { DataMapper } from '@/components/settings/DataMapper';
 
 export function Settings() {
     const { launches, activeLaunchId, addLaunch, updateLaunch, removeLaunch, selectLaunch, error } = useLeads();
 
     const [isEditing, setIsEditing] = useState(false);
+    const [isMapping, setIsMapping] = useState(false);
     const [formData, setFormData] = useState<GoogleSheetConfig>({
         id: '',
         name: '',
@@ -126,12 +128,30 @@ export function Settings() {
                             </div>
 
                             <div className="flex gap-2 pt-4">
-                                <Button type="submit">Salvar</Button>
+                                <Button type="button" onClick={() => setIsMapping(true)}>
+                                    Próximo: Mapear Colunas
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
                                 <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
                             </div>
                         </form>
                     </CardContent>
                 </Card>
+            ) : isMapping ? (
+                <DataMapper
+                    config={formData}
+                    onSave={(newConfig) => {
+                        const existing = launches.find(l => l.id === newConfig.id);
+                        if (existing) {
+                            updateLaunch(newConfig);
+                        } else {
+                            addLaunch(newConfig);
+                        }
+                        setIsMapping(false);
+                        setIsEditing(false);
+                    }}
+                    onCancel={() => setIsMapping(false)}
+                />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {launches.map((launch) => (

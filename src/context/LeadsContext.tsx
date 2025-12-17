@@ -65,7 +65,8 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
             name: item.name,
             spreadsheetId: item.spreadsheet_id,
             sheetName: item.sheet_name,
-            accessToken: item.access_token
+            accessToken: item.access_token,
+            mappings: item.mappings // Load mappings from DB
         }));
 
         setLaunches(mappedLaunches);
@@ -79,7 +80,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem('activeLaunchId');
             setLeads(generateMockLeads(50));
         }
-    }, [activeLaunchId, launches]); // Added launches to dependency array to ensure refresh uses latest config
+    }, [activeLaunchId, launches]);
 
     const refresh = async () => {
         const currentLaunch = launches.find(l => l.id === activeLaunchId);
@@ -89,7 +90,8 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         setError(null);
         try {
             const data = await fetchGoogleSheetData(currentLaunch);
-            const parsed = parseSheetData(data);
+            // Pass the configuration to the parser
+            const parsed = parseSheetData(data, currentLaunch);
             setLeads(parsed);
         } catch (err: any) {
             console.error(err);
@@ -111,7 +113,8 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 name: config.name,
                 spreadsheet_id: config.spreadsheetId,
                 sheet_name: config.sheetName,
-                access_token: config.accessToken
+                access_token: config.accessToken,
+                mappings: config.mappings // Save mappings
             });
 
             if (error) {
@@ -137,7 +140,8 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 name: config.name,
                 spreadsheet_id: config.spreadsheetId,
                 sheet_name: config.sheetName,
-                access_token: config.accessToken
+                access_token: config.accessToken,
+                mappings: config.mappings // Save mappings
             }).eq('id', config.id);
 
             if (error) {
