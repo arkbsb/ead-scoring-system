@@ -14,7 +14,9 @@ console.log('Supabase Config:', {
     keyPresent: !!supabaseAnonKey
 });
 
-export const supabase = createClient(
-    supabaseUrl || '',
-    supabaseAnonKey || ''
-);
+// Fallback to prevent crash if variables are missing
+// The app will load but Auth/DB will fail gracefully instead of white screen
+const safeUrl = supabaseUrl || 'https://placeholder.supabase.co';
+const safeKey = supabaseAnonKey || 'placeholder-key';
+
+export const supabase = createClient(safeUrl, safeKey);
