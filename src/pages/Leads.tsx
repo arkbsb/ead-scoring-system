@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useLeads } from '@/context/LeadsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Need to create
-import { Download } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Download, Search, Filter, Eye, MessageCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Lead } from '@/lib/types';
+import { LeadDetailsModal } from '@/components/LeadDetailsModal';
 
 export function Leads() {
     const { leads } = useLeads();
@@ -42,117 +44,165 @@ export function Leads() {
         doc.save('leads.pdf');
     };
 
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleViewDetails = (lead: Lead) => {
+        setSelectedLead(lead);
+        setIsModalOpen(true);
+    };
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-in pb-8">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Leads</h2>
+                {/* Title removed as it is in Topbar, but here we can have module title if preferred, or actions */}
+                <h2 className="text-3xl font-bold tracking-tight">Gestão de Leads</h2>
+
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={exportCSV}>
+                    <Button variant="outline" onClick={exportCSV} className="bg-card hover:bg-muted text-muted-foreground hover:text-foreground">
                         <Download className="mr-2 h-4 w-4" />
                         Excel
                     </Button>
-                    <Button variant="outline" onClick={exportPDF}>
+                    <Button variant="outline" onClick={exportPDF} className="bg-card hover:bg-muted text-muted-foreground hover:text-foreground">
                         <Download className="mr-2 h-4 w-4" />
                         PDF
                     </Button>
                 </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Filtros</CardTitle>
+            <Card className="shadow-lg">
+                <CardHeader className="border-b pb-4">
+                    <CardTitle className="flex items-center gap-2">
+                        <Filter className="h-5 w-5 text-mint-dark dark:text-mint" />
+                        Filtros Avançados
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <div>
-                            <label className="text-sm font-medium">Busca</label>
-                            <Input
-                                placeholder="Nome ou Email..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
+                <CardContent className="pt-6">
+                    <div className="grid gap-6 md:grid-cols-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Busca</label>
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground group-focus-within:text-mint-dark dark:group-focus-within:text-mint transition-colors" />
+                                <Input
+                                    placeholder="Nome ou Email..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-9 bg-background border-input placeholder:text-muted-foreground/50 focus:border-mint-dark focus:ring-mint-dark/20 dark:focus:border-mint dark:focus:ring-mint/20"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="text-sm font-medium">Segmentação</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Segmentação</label>
                             <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint-dark/50 dark:focus-visible:ring-mint/50"
                                 value={segmentation}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSegmentation(e.target.value)}
                             >
-                                <option value="all">Todos</option>
-                                <option value="Quente">Quente</option>
-                                <option value="Morno">Morno</option>
-                                <option value="Frio">Frio</option>
+                                <option value="all">Todos os Status</option>
+                                <option value="Super Qualificado">Super Qualificado</option>
+                                <option value="Qualificado">Qualificado</option>
+                                <option value="Não Qualificado">Não Qualificado</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="text-sm font-medium">Score Mínimo: {minScore}</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">min score: <span className="text-foreground">{minScore}</span></label>
                             <input
                                 type="range"
                                 min="0"
                                 max="1000"
                                 value={minScore}
                                 onChange={(e) => setMinScore(Number(e.target.value))}
-                                className="w-full"
+                                className="w-full accent-mint-dark dark:accent-mint cursor-pointer"
                             />
                         </div>
-                        <div>
-                            <label className="text-sm font-medium">Score Máximo: {maxScore}</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">max score: <span className="text-foreground">{maxScore}</span></label>
                             <input
                                 type="range"
                                 min="0"
                                 max="1000"
                                 value={maxScore}
                                 onChange={(e) => setMaxScore(Number(e.target.value))}
-                                className="w-full"
+                                className="w-full accent-mint-dark dark:accent-mint cursor-pointer"
                             />
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-lg overflow-hidden">
                 <CardContent className="p-0">
                     <div className="relative w-full overflow-auto">
-                        <table className="w-full caption-bottom text-sm">
-                            <thead className="[&_tr]:border-b">
-                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nome</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Score</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Segmentação</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">WhatsApp</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Idade</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Tem Loja</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Faturamento</th>
+                        <table className="w-full caption-bottom text-sm text-left">
+                            <thead className="[&_tr]:border-b [&_tr]:border-border bg-muted/50">
+                                <tr className="border-b transition-colors data-[state=selected]:bg-muted">
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Nome</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Score</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Segmentação</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">WhatsApp</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Idade</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Tem Loja</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground">Faturamento</th>
+                                    <th className="h-12 px-6 align-middle font-medium text-muted-foreground text-right">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
                                 {filteredLeads.map((lead) => (
                                     <tr key={lead.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                        <td className="p-4 align-middle font-medium">{lead.name}</td>
-                                        <td className="p-4 align-middle font-bold text-primary">{lead.score}</td>
-                                        <td className="p-4 align-middle">
-                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${lead.segmentation === 'Quente' ? 'bg-green-100 text-green-800' :
-                                                lead.segmentation === 'Morno' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-red-100 text-red-800'
+                                        <td className="p-6 align-middle font-medium text-foreground">{lead.name}</td>
+                                        <td className="p-6 align-middle font-bold text-mint-dark dark:text-mint font-mono">{lead.score}</td>
+                                        <td className="p-6 align-middle">
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide border ${lead.segmentation === 'Super Qualificado' ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-md shadow-green-500/20' :
+                                                lead.segmentation === 'Qualificado' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-500/20' :
+                                                    'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-500 border-red-200 dark:border-red-500/20'
                                                 }`}>
                                                 {lead.segmentation}
                                             </span>
                                         </td>
-                                        <td className="p-4 align-middle">{lead.whatsapp}</td>
-                                        <td className="p-4 align-middle">{lead.age}</td>
-                                        <td className="p-4 align-middle">{lead.hasStore}</td>
-                                        <td className="p-4 align-middle">{lead.revenue}</td>
+                                        <td className="p-6 align-middle text-muted-foreground">{lead.whatsapp}</td>
+                                        <td className="p-6 align-middle text-muted-foreground">{lead.age}</td>
+                                        <td className="p-6 align-middle text-muted-foreground">{lead.hasStore}</td>
+                                        <td className="p-6 align-middle text-muted-foreground">{lead.revenue}</td>
+                                        <td className="p-6 align-middle text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {lead.whatsapp && (
+                                                    <a
+                                                        href={`https://api.whatsapp.com/send/?phone=55${String(lead.whatsapp).replace(/\D/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={`${buttonVariants({ variant: 'ghost', size: 'icon' })} hover:bg-emerald-100 dark:hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors`}
+                                                        title="Iniciar Conversa WhatsApp"
+                                                    >
+                                                        <MessageCircle className="h-4 w-4" />
+                                                    </a>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleViewDetails(lead)}
+                                                    className="hover:bg-primary/10 hover:text-primary transition-colors"
+                                                    title="Ver Detalhes"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <div className="p-4 text-sm text-muted-foreground">
-                        Mostrando {filteredLeads.length} de {leads.length} leads
-                    </div>
                 </CardContent>
+                <div className="p-4 border-t bg-muted/20 text-sm text-muted-foreground flex justify-between items-center">
+                    <span>Mostrando <span className="text-foreground font-medium">{filteredLeads.length}</span> de {leads.length} leads</span>
+                </div>
             </Card>
+
+            <LeadDetailsModal
+                lead={selectedLead}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 }

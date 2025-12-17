@@ -11,9 +11,9 @@ export function Analysis() {
     const data = useMemo(() => {
         // Segmentation Pie
         const segmentation = [
-            { name: 'Quente', value: leads.filter(l => l.segmentation === 'Quente').length },
-            { name: 'Morno', value: leads.filter(l => l.segmentation === 'Morno').length },
-            { name: 'Frio', value: leads.filter(l => l.segmentation === 'Frio').length },
+            { name: 'Super Qualificado', value: leads.filter(l => l.segmentation === 'Super Qualificado').length },
+            { name: 'Qualificado', value: leads.filter(l => l.segmentation === 'Qualificado').length },
+            { name: 'Não Qualificado', value: leads.filter(l => l.segmentation === 'Não Qualificado').length },
         ].filter(d => d.value > 0);
 
         // Score by Age

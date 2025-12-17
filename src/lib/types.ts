@@ -4,6 +4,8 @@ export interface Lead {
     email?: string;
     whatsapp?: string;
     utm_source?: string;
+    utm_medium?: string;
+    utm_content?: string;
     timestamp: string;
     age: string;
     hasChildren: string;
@@ -28,7 +30,7 @@ export interface Lead {
 
     // Calculated
     score: number;
-    segmentation: 'Quente' | 'Morno' | 'Frio';
+    segmentation: 'Super Qualificado' | 'Qualificado' | 'Não Qualificado';
 }
 
 export interface DashboardMetrics {

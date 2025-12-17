@@ -89,8 +89,8 @@ export const parseSheetData = (data: string[][]): Lead[] => {
         const lead: Partial<Lead> = {
             id: `sheet-${index}`,
             timestamp: parseDate(row[0]), // Parse the timestamp safely
-            name: row[1] || '',      // Column B is usually Name/Email
-            email: row[1] || '',     // Map email to same column
+            name: row[28] || row[1] || '', // Column AC is primary Name, fallback to B (Email)
+            email: row[1] || '',     // Column B is Email
             age: row[2] || '',
             hasChildren: row[3] || '',
             gender: row[4] || '',
@@ -111,8 +111,14 @@ export const parseSheetData = (data: string[][]): Lead[] => {
             isStudent: row[19] || '',
             challengeDifficulty: row[20] || '',
             question: row[21] || '',
-            whatsapp: row[28] || '', // Column AC
+
+            // UTM Params
             utm_source: row[22] || '', // Column W
+            utm_medium: row[23] || '', // Column X (Assumed)
+            utm_content: row[24] || '', // Column Y (Assumed)
+
+            // Personal Info (Updated Mappings)
+            whatsapp: row[29] || '', // Column AD
         };
 
         const score = calculateScore(lead);

@@ -120,8 +120,8 @@ export const calculateScore = (lead: Partial<Lead>): number => {
     return score;
 };
 
-export const getSegmentation = (score: number): 'Quente' | 'Morno' | 'Frio' => {
-    if (score > 700) return 'Quente';
-    if (score >= 400) return 'Morno';
-    return 'Frio';
+export const getSegmentation = (score: number): 'Super Qualificado' | 'Qualificado' | 'Não Qualificado' => {
+    if (score > 700) return 'Super Qualificado';
+    if (score >= 400) return 'Qualificado';
+    return 'Não Qualificado';
 };

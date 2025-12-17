@@ -16,6 +16,8 @@ export const generateMockLeads = (count: number): Lead[] => {
         const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
         const whatsapp = `(11) 9${Math.floor(Math.random() * 10000)}-${Math.floor(Math.random() * 10000)}`;
         const utm_source = getRandomElement(['instagram', 'facebook', 'google', 'email', 'organic']);
+        const utm_medium = getRandomElement(['cpc', 'stories', 'feed', 'reels', 'email_marketing']);
+        const utm_content = getRandomElement(['video_depoimento', 'foto_produto', 'carrossel_dicas', 'promocao_relampago']);
 
         const lead: Partial<Lead> = {
             id: `lead-${i + 1}`,
@@ -23,6 +25,8 @@ export const generateMockLeads = (count: number): Lead[] => {
             email: email,
             whatsapp: whatsapp,
             utm_source: utm_source,
+            utm_medium: utm_medium,
+            utm_content: utm_content,
             timestamp: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
             age: getRandomElement(['Menor de 18 anos', '18 a 32 anos', '33 a 42 anos', '43 a 52 anos', '53 a 62 anos', '63 a 72 anos', '73 ou mais']),
             hasChildren: getRandomElement(['Sim', 'Não']),
