@@ -3,7 +3,7 @@ import { GoogleSheetConfig, ColumnMapping, fetchGoogleSheetData } from '@/lib/go
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Lead } from '@/lib/types';
-import { Loader2, ChevronDown, AlertCircle } from 'lucide-react';
+import { Loader2, ChevronDown, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
 // Simplified Select for native usage if shadcn components are complex to setup perfectly in one go
 // Using standard HTML select with Tailwind classes for robustness
@@ -14,6 +14,12 @@ const AVAILABLE_FIELDS: { value: keyof Lead | 'ignore', label: string, isScorabl
     { value: 'email', label: 'Email', isScorable: false },
     { value: 'whatsapp', label: 'WhatsApp', isScorable: false },
     { value: 'timestamp', label: 'Data/Hora', isScorable: false },
+
+    // UTM / Analytics
+    { value: 'utm_source', label: 'Origem (Source)', isScorable: false },
+    { value: 'utm_medium', label: 'Mídia/Público (Medium)', isScorable: false },
+    { value: 'utm_campaign', label: 'Campanha', isScorable: false },
+    { value: 'utm_content', label: 'Conteúdo/Criativo', isScorable: false },
 
     // Scorable Fields
     { value: 'age', label: 'Idade', isScorable: true },
@@ -82,21 +88,7 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
         setMappings(newMappings);
     };
 
-    const handleScoreChange = (colIndex: number, value: string, score: string) => {
-        const newMappings = [...mappings];
-        const currentRules = newMappings[colIndex].scoreRules || [];
 
-        // Check if rule exists
-        const existingRuleIndex = currentRules.findIndex(r => r.value === value);
-        if (existingRuleIndex >= 0) {
-            currentRules[existingRuleIndex].score = Number(score);
-        } else {
-            currentRules.push({ value, score: Number(score) });
-        }
-
-        newMappings[colIndex].scoreRules = currentRules;
-        setMappings(newMappings);
-    };
 
     const getUniqueValues = (colIndex: number) => {
         const values = new Set<string>();
@@ -177,22 +169,131 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                     </Button>
 
                                                     {activeScoreColumn === index && (
-                                                        <div className="mt-2 p-3 bg-muted rounded-lg space-y-2 animate-in slide-in-from-top-2">
-                                                            <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Atribuir Pontos</p>
-                                                            {getUniqueValues(index).map(val => (
-                                                                <div key={val} className="flex items-center gap-2">
-                                                                    <span className="text-xs flex-1 truncate" title={val}>{val}</span>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="text-xs text-muted-foreground">pts:</span>
+                                                        <div className="mt-2 p-3 bg-muted rounded-lg space-y-3 animate-in slide-in-from-top-2 border border-border">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-xs font-semibold uppercase text-muted-foreground">
+                                                                    Pontos para: <span className="text-foreground">{map.headerName}</span>
+                                                                </p>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                                                                    onClick={() => {
+                                                                        // Auto-populate from unique values if empty
+                                                                        const uniques = getUniqueValues(index);
+                                                                        const currentRules = map.scoreRules || [];
+                                                                        const newRules = [...currentRules];
+                                                                        let added = 0;
+                                                                        uniques.forEach(val => {
+                                                                            if (!newRules.find(r => r.value === val)) {
+                                                                                newRules.push({ value: val, score: 0, matchType: 'equals' });
+                                                                                added++;
+                                                                            }
+                                                                        });
+                                                                        if (added > 0) {
+                                                                            const newMappings = [...mappings];
+                                                                            newMappings[index].scoreRules = newRules;
+                                                                            setMappings(newMappings);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Importar da Planilha
+                                                                </Button>
+                                                            </div>
+
+                                                            {/* Manual Entry Form */}
+                                                            <div className="bg-background p-2 rounded border space-y-2">
+                                                                <div className="grid grid-cols-[1fr,80px,80px,auto] gap-2 items-end">
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Resposta</label>
                                                                         <input
-                                                                            type="number"
-                                                                            className="w-16 h-7 rounded border border-input px-2 text-xs"
-                                                                            value={map.scoreRules?.find(r => r.value === val)?.score || 0}
-                                                                            onChange={(e) => handleScoreChange(index, val, e.target.value)}
+                                                                            type="text"
+                                                                            className="w-full h-8 rounded border border-input px-2 text-xs"
+                                                                            placeholder="Ex: Sim"
+                                                                            id={`new-val-${index}`}
                                                                         />
                                                                     </div>
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Tipo</label>
+                                                                        <select id={`new-type-${index}`} className="w-full h-8 rounded border border-input px-1 text-xs bg-background">
+                                                                            <option value="equals">Igual</option>
+                                                                            <option value="contains">Contém</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Pts</label>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-full h-8 rounded border border-input px-2 text-xs"
+                                                                            placeholder="0"
+                                                                            id={`new-score-${index}`}
+                                                                        />
+                                                                    </div>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="h-8 w-8 p-0"
+                                                                        onClick={() => {
+                                                                            const valInput = document.getElementById(`new-val-${index}`) as HTMLInputElement;
+                                                                            const scoreInput = document.getElementById(`new-score-${index}`) as HTMLInputElement;
+                                                                            const typeInput = document.getElementById(`new-type-${index}`) as HTMLSelectElement;
+
+                                                                            if (valInput.value) {
+                                                                                const newMappings = [...mappings];
+                                                                                const rules = newMappings[index].scoreRules || [];
+                                                                                // Remove existing if duplicate value to avoid confusion
+                                                                                const cleanRules = rules.filter(r => r.value !== valInput.value);
+
+                                                                                cleanRules.push({
+                                                                                    value: valInput.value,
+                                                                                    score: Number(scoreInput.value),
+                                                                                    matchType: typeInput.value as 'equals' | 'contains'
+                                                                                });
+
+                                                                                newMappings[index].scoreRules = cleanRules;
+                                                                                setMappings(newMappings);
+
+                                                                                valInput.value = '';
+                                                                                scoreInput.value = '';
+                                                                                valInput.focus();
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Plus className="h-4 w-4" />
+                                                                    </Button>
                                                                 </div>
-                                                            ))}
+                                                            </div>
+
+                                                            {/* Rule List */}
+                                                            <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
+                                                                {(map.scoreRules || []).length === 0 && (
+                                                                    <p className="text-xs text-muted-foreground text-center py-2 italic">Nenhuma regra definida.</p>
+                                                                )}
+                                                                {(map.scoreRules || []).map((rule, rIndex) => (
+                                                                    <div key={rIndex} className="flex items-center gap-2 bg-background p-1.5 rounded border border-dashed text-xs group">
+                                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono
+                                                                            ${rule.matchType === 'contains' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                                            {rule.matchType === 'contains' ? 'CONTÉM' : 'IGUAL'}
+                                                                        </span>
+                                                                        <span className="flex-1 font-medium truncate" title={rule.value}>{rule.value}</span>
+
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{rule.score} pts</span>
+                                                                            <button
+                                                                                className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                onClick={() => {
+                                                                                    const newMappings = [...mappings];
+                                                                                    const rules = [...(newMappings[index].scoreRules || [])];
+                                                                                    rules.splice(rIndex, 1);
+                                                                                    newMappings[index].scoreRules = rules;
+                                                                                    setMappings(newMappings);
+                                                                                }}
+                                                                            >
+                                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>

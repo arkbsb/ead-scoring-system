@@ -4,6 +4,7 @@ import { calculateScore, getSegmentation } from './scoring';
 export interface ScoreRule {
     value: string;
     score: number;
+    matchType: 'equals' | 'contains';
 }
 
 export interface ColumnMapping {
@@ -116,7 +117,17 @@ export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Le
 
                     // Calculate Score
                     if (mapping.scoreRules && mapping.scoreRules.length > 0) {
-                        const rule = mapping.scoreRules.find(r => r.value.trim() === cellValue.trim());
+                        const cellValStr = String(cellValue || '').trim().toLowerCase();
+
+                        // Find matching rule
+                        const rule = mapping.scoreRules.find(r => {
+                            const ruleVal = r.value.trim().toLowerCase();
+                            if (r.matchType === 'contains') {
+                                return cellValStr.includes(ruleVal);
+                            }
+                            return cellValStr === ruleVal;
+                        });
+
                         if (rule) {
                             score += rule.score;
                         }
@@ -156,9 +167,10 @@ export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Le
                 isStudent: row[19] || '',
                 challengeDifficulty: row[20] || '',
                 question: row[21] || '',
-                utm_source: row[22] || '',
-                utm_medium: row[23] || '',
-                utm_content: row[24] || '',
+                utm_source: row[22] || '', // Coluna W
+                utm_campaign: row[23] || '', // Coluna X
+                utm_medium: row[24] || '', // Coluna Y (Público)
+                utm_content: row[25] || '', // Coluna Z (Criativo)
                 whatsapp: row[29] || '',
             };
 

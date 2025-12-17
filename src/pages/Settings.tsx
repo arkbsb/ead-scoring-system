@@ -74,7 +74,22 @@ export function Settings() {
                 )}
             </div>
 
-            {isEditing ? (
+            {isEditing && isMapping ? (
+                <DataMapper
+                    config={formData}
+                    onSave={(newConfig) => {
+                        const existing = launches.find(l => l.id === newConfig.id);
+                        if (existing) {
+                            updateLaunch(newConfig);
+                        } else {
+                            addLaunch(newConfig);
+                        }
+                        setIsMapping(false);
+                        setIsEditing(false);
+                    }}
+                    onCancel={() => setIsMapping(false)}
+                />
+            ) : isEditing ? (
                 <Card>
                     <CardHeader>
                         <CardTitle>{launches.find(l => l.id === formData.id) ? 'Editar Lançamento' : 'Novo Lançamento'}</CardTitle>
@@ -137,21 +152,6 @@ export function Settings() {
                         </form>
                     </CardContent>
                 </Card>
-            ) : isMapping ? (
-                <DataMapper
-                    config={formData}
-                    onSave={(newConfig) => {
-                        const existing = launches.find(l => l.id === newConfig.id);
-                        if (existing) {
-                            updateLaunch(newConfig);
-                        } else {
-                            addLaunch(newConfig);
-                        }
-                        setIsMapping(false);
-                        setIsEditing(false);
-                    }}
-                    onCancel={() => setIsMapping(false)}
-                />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {launches.map((launch) => (

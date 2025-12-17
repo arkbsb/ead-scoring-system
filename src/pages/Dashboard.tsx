@@ -42,25 +42,28 @@ export function Dashboard() {
 
         // ... (rest of filtering logic)
 
-        // Helper to find best performing property
+        // Helper to find best performing property based on Super Qualified count
         const getBestMetric = (key: keyof typeof leads[0]) => {
-            const groups: Record<string, { totalScore: number; count: number }> = {};
+            const groups: Record<string, { superQualifiedCount: number; total: number }> = {};
 
             leads.forEach(lead => {
                 const value = String(lead[key] || '').toLowerCase();
-                if (!value) return;
+                if (!value || value === 'undefined') return;
 
-                if (!groups[value]) groups[value] = { totalScore: 0, count: 0 };
-                groups[value].totalScore += lead.score;
-                groups[value].count += 1;
+                if (!groups[value]) groups[value] = { superQualifiedCount: 0, total: 0 };
+                groups[value].total += 1;
+
+                if (lead.segmentation === 'Super Qualificado') {
+                    groups[value].superQualifiedCount += 1;
+                }
             });
 
-            let best = { name: '', avg: 0, count: 0 };
+            let best = { name: '', count: 0, total: 0 };
 
             Object.entries(groups).forEach(([name, data]) => {
-                const avg = data.totalScore / data.count;
-                if (avg > best.avg) {
-                    best = { name, avg, count: data.count };
+                // Determine best by absolute number of Super Qualified leads
+                if (data.superQualifiedCount > best.count) {
+                    best = { name, count: data.superQualifiedCount, total: data.total };
                 }
             });
 
@@ -68,10 +71,10 @@ export function Dashboard() {
         };
 
         const bestSource = getBestMetric('utm_source');
-        const bestMedium = getBestMetric('utm_medium');
-        const bestContent = getBestMetric('utm_content');
+        const bestAudience = getBestMetric('utm_medium'); // Mapping "Público" to Medium as per request context
+        const bestCreative = getBestMetric('utm_content'); // Mapping "Criativo" to Content
 
-        return { total, avgScore, qualified, superQualified, histogram, qualityData, bestSource, bestMedium, bestContent };
+        return { total, avgScore, qualified, superQualified, histogram, qualityData, bestSource, bestAudience, bestCreative };
     }, [leads]);
 
     const topLeads = useMemo(() => {
@@ -116,9 +119,9 @@ export function Dashboard() {
             {/* Middle Cards - Best Performers */}
             <div className="grid gap-6 md:grid-cols-3">
                 {[
-                    { title: "Melhor Origem (Source)", icon: Globe, metric: metrics.bestSource },
-                    { title: "Melhor Mídia (Medium)", icon: Smartphone, metric: metrics.bestMedium },
-                    { title: "Melhor Criativo (Content)", icon: FileText, metric: metrics.bestContent }
+                    { title: "Melhor Público (Medium)", icon: Users, metric: metrics.bestAudience },
+                    { title: "Melhor Criativo (Content)", icon: FileText, metric: metrics.bestCreative },
+                    { title: "Melhor Origem (Source)", icon: Globe, metric: metrics.bestSource }
                 ].map((item, i) => (
                     <Card key={i} className="shadow-lg hover:border-mint/30 transition-all duration-300">
                         <CardHeader className="space-y-1 pb-2">
@@ -132,9 +135,8 @@ export function Dashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center gap-2 mt-2">
-                                <span className="text-sm font-mono text-mint-dark dark:text-mint">{item.metric.avg.toFixed(0)} score médio</span>
-                                <span className="text-xs text-muted-foreground">•</span>
-                                <span className="text-xs text-muted-foreground">{item.metric.count} leads</span>
+                                <span className="text-sm font-bold text-mint-dark dark:text-mint">{item.metric.count} super qualificados</span>
+                                <span className="text-xs text-muted-foreground">/ {item.metric.total} total</span>
                             </div>
                         </CardContent>
                     </Card>

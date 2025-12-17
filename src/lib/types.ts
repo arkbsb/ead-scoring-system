@@ -5,6 +5,7 @@ export interface Lead {
     whatsapp?: string;
     utm_source?: string;
     utm_medium?: string;
+    utm_campaign?: string;
     utm_content?: string;
     timestamp: string;
     age: string;
