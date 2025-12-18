@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useLeads } from '@/context/LeadsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Users, Target, Flame, FileText, Smartphone, Globe, Trophy, RefreshCw, TrendingUp } from 'lucide-react';
+import { Users, Target, Flame, FileText, Globe, Trophy, RefreshCw, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 
