@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { AdvancedFilterState, FilterRule } from '@/lib/types';
 import { Plus, Filter, Search, X } from 'lucide-react';
-import { GoogleSheetConfig } from '@/lib/google-sheets';
 
 const AVAILABLE_MATCH_TYPES = [
     { value: 'equals', label: 'Igual a' },
@@ -19,7 +18,6 @@ interface FilterBarProps {
     filters: AdvancedFilterState;
     setFilters: React.Dispatch<React.SetStateAction<AdvancedFilterState>>;
     availableFields: string[]; // List of Keys from the Lead object (including custom)
-    mappingConfig?: GoogleSheetConfig; // To get nice labels if available
 }
 
 export function FilterBar({ filters, setFilters, availableFields }: FilterBarProps) {
