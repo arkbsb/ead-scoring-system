@@ -32,6 +32,9 @@ export interface Lead {
     // Calculated
     score: number;
     segmentation: 'Super Qualificado' | 'Qualificado' | 'Não Qualificado';
+
+    // Allow dynamic custom fields
+    [key: string]: any;
 }
 
 export interface DashboardMetrics {

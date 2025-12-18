@@ -145,18 +145,49 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                             </p>
                                         </td>
                                         <td className="p-4 w-[30%]">
-                                            <select
-                                                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                                value={map.targetField}
-                                                onChange={(e) => handleFieldChange(index, e.target.value)}
-                                            >
-                                                {AVAILABLE_FIELDS.map(f => (
-                                                    <option key={f.value} value={f.value}>{f.label}</option>
-                                                ))}
-                                            </select>
+                                            {AVAILABLE_FIELDS.some(f => f.value === map.targetField) ? (
+                                                <select
+                                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                    value={map.targetField}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === '__custom__') {
+                                                            // Switch to custom mode, defaulting to a sanitized header name or empty
+                                                            const suggested = map.headerName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                                                            handleFieldChange(index, suggested || 'novo_campo');
+                                                        } else {
+                                                            handleFieldChange(index, e.target.value);
+                                                        }
+                                                    }}
+                                                >
+                                                    {AVAILABLE_FIELDS.map(f => (
+                                                        <option key={f.value} value={f.value}>{f.label}</option>
+                                                    ))}
+                                                    <option value="__custom__" className="font-bold text-primary">+ Criar novo campo...</option>
+                                                </select>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                        value={map.targetField as string}
+                                                        onChange={(e) => handleFieldChange(index, e.target.value)}
+                                                        placeholder="Nome do campo..."
+                                                        autoFocus
+                                                    />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 shrink-0"
+                                                        onClick={() => handleFieldChange(index, 'ignore')}
+                                                        title="Voltar para lista"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="p-4">
-                                            {fieldConfig?.isScorable ? (
+                                            {(fieldConfig?.isScorable || (!fieldConfig && map.targetField !== 'ignore')) ? (
                                                 <div>
                                                     <Button
                                                         variant={activeScoreColumn === index ? "secondary" : "outline"}

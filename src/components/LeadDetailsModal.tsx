@@ -1,4 +1,4 @@
-import { X, User, Briefcase, Target } from 'lucide-react';
+import { X, User, Briefcase, Target, Info } from 'lucide-react';
 import { Lead } from '@/lib/types';
 import { Button, buttonVariants } from '@/components/ui/button';
 
@@ -102,6 +102,44 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
                             </div>
                         </div>
                     </div>
+
+                    {/* Additional Info (Dynamic) */}
+                    {Object.keys(lead).filter(key => {
+                        const standardKeys = [
+                            'id', 'name', 'email', 'whatsapp', 'timestamp', 'score', 'segmentation',
+                            'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+                            'age', 'gender', 'education', 'maritalStatus', 'hasChildren', 'isStudent',
+                            'hasStore', 'storeType', 'storeTime', 'revenue',
+                            'teamStructure', 'management', 'digitalPresence', 'sales',
+                            'difficulty', 'challengeDifficulty', 'dream', 'question'
+                        ];
+                        // Only show if value exists and is meant to be shown (simple strings/numbers)
+                        const val = lead[key];
+                        return !standardKeys.includes(key) && val !== null && val !== undefined && val !== '' && typeof val !== 'object';
+                    }).length > 0 && (
+                            <div className="md:col-span-2 space-y-4 pt-4 border-t border-border">
+                                <div className="flex items-center gap-2 pb-2">
+                                    <Info className="h-5 w-5 text-muted-foreground" />
+                                    <h3 className="font-semibold text-foreground">Outras Informações</h3>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    {Object.keys(lead).filter(key => {
+                                        const standardKeys = [
+                                            'id', 'name', 'email', 'whatsapp', 'timestamp', 'score', 'segmentation',
+                                            'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+                                            'age', 'gender', 'education', 'maritalStatus', 'hasChildren', 'isStudent',
+                                            'hasStore', 'storeType', 'storeTime', 'revenue',
+                                            'teamStructure', 'management', 'digitalPresence', 'sales',
+                                            'difficulty', 'challengeDifficulty', 'dream', 'question'
+                                        ];
+                                        const val = lead[key];
+                                        return !standardKeys.includes(key) && val !== null && val !== undefined && val !== '' && typeof val !== 'object';
+                                    }).map(key => (
+                                        <InfoItem key={key} label={key.replace(/_/g, ' ')} value={lead[key]} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                 </div>
 
                 {/* Footer */}
