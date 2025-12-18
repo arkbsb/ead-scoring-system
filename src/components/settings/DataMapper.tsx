@@ -3,7 +3,7 @@ import { GoogleSheetConfig, ColumnMapping, fetchGoogleSheetData } from '@/lib/go
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Lead } from '@/lib/types';
-import { Loader2, ChevronDown, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Loader2, ChevronDown, AlertCircle, Plus, Trash2, Target } from 'lucide-react';
 
 // Simplified Select for native usage if shadcn components are complex to setup perfectly in one go
 // Using standard HTML select with Tailwind classes for robustness
@@ -338,6 +338,59 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                         </tbody>
                     </table>
                 </div>
+
+                {/* Segmentation Config */}
+                <div className="p-4 bg-muted/10 border-t border-border space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Target className="h-4 w-4 text-primary" />
+                        Critérios de Segmentação (Pontuação de Corte)
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Mínimo para Super Qualificado</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    value={config.segmentation?.superQualified ?? 700}
+                                    onChange={(e) => {
+                                        onSave({
+                                            ...config,
+                                            mappings, // Ensure we keep current mappings
+                                            segmentation: {
+                                                superQualified: Number(e.target.value),
+                                                qualified: config.segmentation?.qualified ?? 400
+                                            }
+                                        });
+                                    }}
+                                />
+                                <span className="absolute right-3 top-2 text-xs text-muted-foreground">pts</span>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Mínimo para Qualificado</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    value={config.segmentation?.qualified ?? 400}
+                                    onChange={(e) => {
+                                        onSave({
+                                            ...config,
+                                            mappings,
+                                            segmentation: {
+                                                superQualified: config.segmentation?.superQualified ?? 700,
+                                                qualified: Number(e.target.value)
+                                            }
+                                        });
+                                    }}
+                                />
+                                <span className="absolute right-3 top-2 text-xs text-muted-foreground">pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="p-4 border-t bg-muted/20 flex justify-end gap-2">
                     <Button variant="outline" onClick={onCancel}>Cancelar</Button>
                     <Button onClick={handleSave}>Salvar Mapeamento</Button>

@@ -44,18 +44,32 @@ export interface DashboardMetrics {
     leadsByScoreRange: { range: string; count: number }[];
 }
 
+export type FilterMatchType = 'equals' | 'contains' | 'greater_than' | 'less_than' | 'starts_with' | 'ends_with';
+
+export interface FilterRule {
+    id: string;
+    field: string;
+    matchType: FilterMatchType;
+    value: string | number;
+}
+
+export interface DateRange {
+    from: Date | undefined;
+    to: Date | undefined;
+}
+
+export interface AdvancedFilterState {
+    search: string;
+    segmentation: string; // 'all' | 'Super Qualificado' | ...
+    minScore: number;
+    maxScore: number;
+    dateRange: DateRange;
+    rules: FilterRule[];
+}
+
+// Deprecated: Keeping for backward compatibility if needed temporarily, but ideally removed
 export interface FilterState {
     minScore: number;
     maxScore: number;
-    age: string[];
-    gender: string[];
-    hasChildren: string | null;
-    hasStore: string | null;
-    storeType: string[];
-    revenue: string[];
-    storeTime: string[];
-    education: string[];
-    maritalStatus: string[];
-    isStudent: string | null;
     search: string;
 }

@@ -1,32 +1,88 @@
 import { useState, useMemo } from 'react';
 import { useLeads } from '@/context/LeadsContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Download, Search, Filter, Eye, MessageCircle } from 'lucide-react';
+import { Download, Eye, MessageCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Lead } from '@/lib/types';
+import { Lead, AdvancedFilterState } from '@/lib/types';
 import { LeadDetailsModal } from '@/components/LeadDetailsModal';
+import { FilterBar } from '@/components/leads/FilterBar';
 
 export function Leads() {
     const { leads } = useLeads();
-    const [search, setSearch] = useState('');
-    const [minScore, setMinScore] = useState(0);
-    const [maxScore, setMaxScore] = useState(1000);
-    const [segmentation, setSegmentation] = useState<string>('all');
+
+    // Initial Filter State
+    const [filters, setFilters] = useState<AdvancedFilterState>({
+        search: '',
+        segmentation: 'all',
+        minScore: 0,
+        maxScore: 1000,
+        dateRange: { from: undefined, to: undefined },
+        rules: []
+    });
+
+    // Extract all unique keys from all leads for the dynamic field selector
+    const availableFields = useMemo(() => {
+        if (!Array.isArray(leads)) return [];
+        const keys = new Set<string>();
+        leads.forEach(lead => {
+            if (!lead) return;
+            Object.keys(lead).forEach(k => keys.add(k));
+        });
+        return Array.from(keys);
+    }, [leads]);
 
     const filteredLeads = useMemo(() => {
         return leads.filter(lead => {
-            const matchesSearch = lead.name.toLowerCase().includes(search.toLowerCase()) ||
-                lead.id.toLowerCase().includes(search.toLowerCase());
-            const matchesScore = lead.score >= minScore && lead.score <= maxScore;
-            const matchesSeg = segmentation === 'all' || lead.segmentation === segmentation;
+            // 1. Basic Search
+            const searchLower = filters.search.toLowerCase();
+            const matchesSearch = !filters.search ||
+                lead.name.toLowerCase().includes(searchLower) ||
+                lead.email?.toLowerCase().includes(searchLower) ||
+                lead.id.toLowerCase().includes(searchLower);
 
-            return matchesSearch && matchesScore && matchesSeg;
+            // 2. Score Range
+            const matchesScore = lead.score >= filters.minScore && lead.score <= filters.maxScore;
+
+            // 3. Segmentation
+            const matchesSeg = filters.segmentation === 'all' || lead.segmentation === filters.segmentation;
+
+            // 4. Dynamic Rules
+            const matchesRules = filters.rules.every(rule => {
+                const leadValue = lead[rule.field];
+                if (leadValue === undefined || leadValue === null) return false;
+
+                const valString = String(leadValue).toLowerCase();
+                const ruleValString = String(rule.value).toLowerCase();
+
+                // Numeric comparison helper
+                const numLead = Number(leadValue);
+                const numRule = Number(rule.value);
+                const isNumeric = !isNaN(numLead) && !isNaN(numRule) && rule.value !== '';
+
+                switch (rule.matchType) {
+                    case 'equals':
+                        return valString === ruleValString;
+                    case 'contains':
+                        return valString.includes(ruleValString);
+                    case 'starts_with':
+                        return valString.startsWith(ruleValString);
+                    case 'ends_with':
+                        return valString.endsWith(ruleValString);
+                    case 'greater_than':
+                        return isNumeric ? numLead > numRule : false;
+                    case 'less_than':
+                        return isNumeric ? numLead < numRule : false;
+                    default:
+                        return true;
+                }
+            });
+
+            return matchesSearch && matchesScore && matchesSeg && matchesRules;
         });
-    }, [leads, search, minScore, maxScore, segmentation]);
+    }, [leads, filters]);
 
     const exportCSV = () => {
         const ws = XLSX.utils.json_to_sheet(filteredLeads);
@@ -55,7 +111,6 @@ export function Leads() {
     return (
         <div className="space-y-8 animate-fade-in pb-8">
             <div className="flex items-center justify-between">
-                {/* Title removed as it is in Topbar, but here we can have module title if preferred, or actions */}
                 <h2 className="text-3xl font-bold tracking-tight">Gestão de Leads</h2>
 
                 <div className="flex gap-2">
@@ -70,65 +125,11 @@ export function Leads() {
                 </div>
             </div>
 
-            <Card className="shadow-lg">
-                <CardHeader className="border-b pb-4">
-                    <CardTitle className="flex items-center gap-2">
-                        <Filter className="h-5 w-5 text-mint-dark dark:text-mint" />
-                        Filtros Avançados
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="grid gap-6 md:grid-cols-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Busca</label>
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground group-focus-within:text-mint-dark dark:group-focus-within:text-mint transition-colors" />
-                                <Input
-                                    placeholder="Nome ou Email..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-9 bg-background border-input placeholder:text-muted-foreground/50 focus:border-mint-dark focus:ring-mint-dark/20 dark:focus:border-mint dark:focus:ring-mint/20"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Segmentação</label>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint-dark/50 dark:focus-visible:ring-mint/50"
-                                value={segmentation}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSegmentation(e.target.value)}
-                            >
-                                <option value="all">Todos os Status</option>
-                                <option value="Super Qualificado">Super Qualificado</option>
-                                <option value="Qualificado">Qualificado</option>
-                                <option value="Não Qualificado">Não Qualificado</option>
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">min score: <span className="text-foreground">{minScore}</span></label>
-                            <input
-                                type="range"
-                                min="0"
-                                max="1000"
-                                value={minScore}
-                                onChange={(e) => setMinScore(Number(e.target.value))}
-                                className="w-full accent-mint-dark dark:accent-mint cursor-pointer"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">max score: <span className="text-foreground">{maxScore}</span></label>
-                            <input
-                                type="range"
-                                min="0"
-                                max="1000"
-                                value={maxScore}
-                                onChange={(e) => setMaxScore(Number(e.target.value))}
-                                className="w-full accent-mint-dark dark:accent-mint cursor-pointer"
-                            />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <FilterBar
+                filters={filters}
+                setFilters={setFilters}
+                availableFields={availableFields}
+            />
 
             <Card className="shadow-lg overflow-hidden">
                 <CardContent className="p-0">

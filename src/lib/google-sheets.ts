@@ -14,6 +14,11 @@ export interface ColumnMapping {
     scoreRules?: ScoreRule[]; // Points configuration
 }
 
+export interface SegmentationConfig {
+    superQualified: number;
+    qualified: number;
+}
+
 export interface GoogleSheetConfig {
     id: string;
     name: string; // Launch Name
@@ -21,6 +26,7 @@ export interface GoogleSheetConfig {
     sheetName: string;
     accessToken?: string;
     mappings?: ColumnMapping[];
+    segmentation?: SegmentationConfig;
 }
 
 import * as XLSX from 'xlsx';
@@ -180,7 +186,11 @@ export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Le
         return {
             ...lead,
             score,
-            segmentation: getSegmentation(score)
+            segmentation: getSegmentation(
+                score,
+                config?.segmentation?.superQualified,
+                config?.segmentation?.qualified
+            )
         } as Lead;
     });
 };
