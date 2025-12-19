@@ -138,7 +138,7 @@ export function FilterBar({ filters, setFilters, availableFields }: FilterBarPro
 
                 {/* Dynamic Rules Section */}
                 {isExpanded && (
-                    <div className="pt-4 border-t border-border space-y-3 animate-accordion-down">
+                    <div className="pt-4 border-t border-border space-y-3 animate-fade-in">
                         <div className="flex items-center justify-between">
                             <h4 className="text-sm font-semibold flex items-center gap-2">
                                 <Filter className="h-4 w-4 text-primary" />

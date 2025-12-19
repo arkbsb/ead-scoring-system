@@ -9,6 +9,7 @@ import autoTable from 'jspdf-autotable';
 import { Lead, AdvancedFilterState } from '@/lib/types';
 import { LeadDetailsModal } from '@/components/LeadDetailsModal';
 import { FilterBar } from '@/components/leads/FilterBar';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export function Leads() {
     const { leads } = useLeads();
@@ -125,11 +126,13 @@ export function Leads() {
                 </div>
             </div>
 
-            <FilterBar
-                filters={filters}
-                setFilters={setFilters}
-                availableFields={availableFields}
-            />
+            <ErrorBoundary name="Filtros">
+                <FilterBar
+                    filters={filters}
+                    setFilters={setFilters}
+                    availableFields={availableFields}
+                />
+            </ErrorBoundary>
 
             <Card className="shadow-lg overflow-hidden">
                 <CardContent className="p-0">

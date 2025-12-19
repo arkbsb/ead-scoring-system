@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLeads } from '@/context/LeadsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GoogleSheetConfig } from '@/lib/google-sheets';
-import { AlertCircle, CheckCircle2, Plus, Trash2, Edit2, Play, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Trash2, Edit2, Play, ArrowRight, Download, Upload, Shield } from 'lucide-react';
 import { DataMapper } from '@/components/settings/DataMapper';
 
 export function Settings() {
-    const { launches, activeLaunchId, addLaunch, updateLaunch, removeLaunch, selectLaunch, error } = useLeads();
+    const { launches, activeLaunchId, addLaunch, updateLaunch, removeLaunch, selectLaunch, error, exportBackup, importBackup } = useLeads();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isEditing, setIsEditing] = useState(false);
     const [isMapping, setIsMapping] = useState(false);
@@ -206,6 +207,52 @@ export function Settings() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* Backup & Safety Zone */}
+            {!isEditing && (
+                <Card className="border-dashed">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Shield className="h-5 w-5 text-muted-foreground" />
+                            Segurança & Backup
+                        </CardTitle>
+                        <CardDescription>
+                            Exporte suas configurações para garantir que nunca perderá seu trabalho de mapeamento.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex gap-4">
+                        <Button variant="outline" onClick={exportBackup}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Baixar Backup (JSON)
+                        </Button>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept=".json"
+                                ref={fileInputRef}
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onload = (event) => {
+                                            const content = event.target?.result as string;
+                                            if (content) importBackup(content);
+                                        };
+                                        reader.readAsText(file);
+                                    }
+                                    // Reset val
+                                    if (e.target) e.target.value = '';
+                                }}
+                            />
+                            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Restaurar Backup
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {error && (

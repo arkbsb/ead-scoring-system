@@ -1,23 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import {
-    LayoutDashboard,
-    Users,
-    BarChart3,
-    Settings,
-    LogOut,
-    Filter,
-    Download,
-    HelpCircle
-} from 'lucide-react';
+import { LayoutDashboard, Users, FileSpreadsheet, Filter, Download, Settings, ChevronLeft, ChevronRight, Menu, Target, BarChart3, HelpCircle, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Users, label: 'Leads', path: '/leads' },
-    { icon: BarChart3, label: 'Análises', path: '/analysis' },
-    { icon: Filter, label: 'Filtros', path: '/filters' },  // New
-    { icon: Download, label: 'Exportar', path: '/export' }, // New
+    { icon: BarChart3, label: 'Tráfego Pago', path: '/traffic' },
+    { icon: Target, label: 'Metas de Lançamento', path: '/launches' }, // Changed path to '/launches' for cleaner URL
+    { icon: FileSpreadsheet, label: 'Análise', path: '/analysis' }, // New
+    { icon: Filter, label: 'Filtros', path: '/filters' },
+    { icon: Download, label: 'Exportar', path: '/export' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 

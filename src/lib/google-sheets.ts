@@ -146,6 +146,11 @@ export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Le
                 lead.timestamp = parseDate(lead.timestamp);
             }
 
+            // Fallback for Name if not mapped or empty
+            if (!lead.name || lead.name.trim() === '') {
+                lead.name = lead.email ? lead.email.split('@')[0] : 'Lead Sem Nome';
+            }
+
         } else {
             // Legacy / Hardcoded Path (Fallback)
             lead = {
