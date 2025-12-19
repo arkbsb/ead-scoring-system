@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileSpreadsheet, Filter, Download, Settings, ChevronLeft, ChevronRight, Menu, Target, BarChart3, HelpCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileSpreadsheet, Filter, Download, Settings, Target, BarChart3, HelpCircle, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 

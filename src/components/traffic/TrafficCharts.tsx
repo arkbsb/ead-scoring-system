@@ -131,7 +131,7 @@ export function TrafficCharts() {
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
                                     itemStyle={{ fontSize: '12px' }}
-                                    formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'CPL']}
+                                    formatter={(value: number | undefined) => [`R$ ${(value || 0).toFixed(2)}`, 'CPL']}
                                 />
                                 <Area
                                     type="monotone"

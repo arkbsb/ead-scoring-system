@@ -128,7 +128,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 mapping: config.mappings // DB column is mapping
             };
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('lead_sources')
                 .insert(dbPayload)
                 .select()
@@ -211,11 +211,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const refresh = async () => {
-        if (activeLaunch) {
-            await fetchLeads(activeLaunch);
-        }
-    };
+
 
     // --- Safety Layer (Backup & Restore) ---
 
@@ -228,19 +224,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const restoreBackup = (): GoogleSheetConfig[] | null => {
-        try {
-            const backup = localStorage.getItem('lead_source_backup');
-            if (backup) {
-                const parsed = JSON.parse(backup);
-                setLaunches(parsed);
-                return parsed;
-            }
-        } catch (e) {
-            console.error('Failed to restore backup:', e);
-        }
-        return null;
-    };
+
 
     const exportBackup = () => {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(launches, null, 2));

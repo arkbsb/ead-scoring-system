@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Save, ArrowLeft, Target, Wallet, TrendingUp, Link as LinkIcon, AlertCircle, Rocket } from 'lucide-react';
 import { Launch, LaunchType, LaunchStatus, CplScenario } from '@/lib/launch-types';
-import { cn } from '@/lib/utils';
 import { differenceInDays, parseISO } from 'date-fns';
 
 export default function LaunchForm() {

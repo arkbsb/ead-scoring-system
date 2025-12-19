@@ -8,7 +8,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function LaunchList() {
     const navigate = useNavigate();
-    const { launches, deleteLaunch } = useLaunch();
+    const { launches } = useLaunch();
 
     // Helper to calculate days remaining
     const getDaysRemaining = (end: string) => {
@@ -16,13 +16,7 @@ export default function LaunchList() {
         return days > 0 ? days : 0;
     };
 
-    // Helper for progress bar color
-    const getProgressColor = (current: number, total: number) => {
-        const percentage = total > 0 ? (current / total) * 100 : 0;
-        if (percentage >= 90) return 'bg-green-500';
-        if (percentage >= 70) return 'bg-yellow-500';
-        return 'bg-blue-500';
-    };
+
 
     return (
         <div className="space-y-8 p-8 animate-in fade-in duration-500">
@@ -60,7 +54,6 @@ export default function LaunchList() {
                     launches.map((launch) => {
                         if (!launch.startDate || !launch.endDate) return null;
                         const daysRemaining = getDaysRemaining(launch.endDate);
-                        const duration = differenceInDays(parseISO(launch.endDate), parseISO(launch.startDate));
 
                         return (
                             <Card
