@@ -15,7 +15,7 @@ import { useLaunch } from '@/context/LaunchContext';
 import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWidget';
 
 function DashboardContent() {
-    const { refreshData, loading, error, spreadsheetId, campaigns } = useTraffic();
+    const { refreshData, loading, error, spreadsheetId } = useTraffic();
     const { launches } = useLaunch();
     const activeLaunch = launches.find(l => l.status === 'Ativo');
 
