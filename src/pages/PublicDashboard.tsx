@@ -5,6 +5,8 @@ import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMe
 import { LeadTemperature } from '@/components/traffic/LeadTemperature';
 import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
 import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
+import { TrafficCharts } from '@/components/traffic/TrafficCharts';
+import { TrafficTables } from '@/components/traffic/TrafficTables';
 import { Eye, AlertCircle } from 'lucide-react';
 import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWidget';
 
@@ -92,8 +94,10 @@ function PublicDashboardContent() {
 
                         <TrafficFunnel />
                         <TrafficSecondaryMetrics />
+                        <TrafficCharts />
                         <LeadTemperature />
                         <LandingPagePerformance />
+                        <TrafficTables />
                     </div>
                 </div>
             </main>

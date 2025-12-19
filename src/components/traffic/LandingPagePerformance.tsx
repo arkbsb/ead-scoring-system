@@ -1,11 +1,15 @@
-import { useTraffic } from '@/context/TrafficContext';
+import { useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, TrendingUp, Sparkles, Award } from 'lucide-react';
 
 export function LandingPagePerformance() {
-    const { kpis, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
 
-    if (loading) {
+    if (!context || context.loading) {
         return (
             <div className="animate-pulse">
                 <div className="h-56 bg-muted/50 rounded-xl" />
@@ -13,6 +17,7 @@ export function LandingPagePerformance() {
         );
     }
 
+    const { kpis } = context;
     const conversionRate = kpis.totalPageViews > 0
         ? (kpis.bestLandingPageLeads / kpis.totalPageViews) * 100
         : 0;

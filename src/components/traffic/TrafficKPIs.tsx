@@ -1,4 +1,6 @@
-import { useTraffic } from '@/context/TrafficContext';
+import { useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import {
@@ -8,15 +10,19 @@ import {
 } from 'lucide-react';
 
 export function TrafficKPIs() {
-    const { kpis, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
 
-    if (loading) {
+    if (!context || context.loading) {
         return <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
             {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-32 bg-muted/50 rounded-xl" />
             ))}
         </div>;
     }
+
+    const { kpis } = context;
 
     const mainMetrics = [
         {

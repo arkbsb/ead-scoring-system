@@ -1,20 +1,26 @@
-import { useState } from 'react';
-import { useTraffic } from '@/context/TrafficContext';
+import { useState, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 
 export function TrafficTables() {
-    const { campaigns, adSets, ads, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
+
     const [activeTab, setActiveTab] = useState<'campaigns' | 'adsets' | 'ads'>('campaigns');
     const [search, setSearch] = useState('');
 
-    if (loading) return null;
+    if (!context || context.loading) return null;
+
+    const { campaigns, adSets = [], ads = [] } = context as any;
 
     const getData = () => {
         let data: any[] = [];
-        if (activeTab === 'campaigns') data = campaigns;
-        if (activeTab === 'adsets') data = adSets;
-        if (activeTab === 'ads') data = ads;
+        if (activeTab === 'campaigns') data = campaigns || [];
+        if (activeTab === 'adsets') data = adSets || [];
+        if (activeTab === 'ads') data = ads || [];
 
         if (search) {
             data = data.filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
@@ -104,6 +110,13 @@ export function TrafficTables() {
                                     <td className="px-6 py-4 text-right font-mono text-muted-foreground">{item.conversions}</td>
                                 </tr>
                             ))}
+                            {getData().length === 0 && (
+                                <tr>
+                                    <td colSpan={9} className="px-6 py-10 text-center text-muted-foreground">
+                                        Nenhum dado encontrado para esta categoria.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

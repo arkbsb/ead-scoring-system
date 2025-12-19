@@ -1,12 +1,16 @@
-import { useTraffic } from '@/context/TrafficContext';
+import { useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TrendingUp, MousePointer, Zap, Target, Radio } from 'lucide-react';
 
 export function TrafficSecondaryMetrics() {
-    const { kpis, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
 
-    if (loading) {
+    if (!context || context.loading) {
         return (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 animate-pulse">
                 {[...Array(5)].map((_, i) => (
@@ -16,6 +20,7 @@ export function TrafficSecondaryMetrics() {
         );
     }
 
+    const { kpis } = context;
     const frequency = kpis.totalReach > 0 ? kpis.totalImpressions / kpis.totalReach : 0;
 
     const secondaryMetrics = [

@@ -1,18 +1,24 @@
-import { useTraffic } from '@/context/TrafficContext';
+import { useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Eye, Users, MousePointer, FileText, UserCheck, Sprout, ChevronRight } from 'lucide-react';
 
 export function TrafficFunnel() {
-    const { kpis, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
 
-    if (loading) {
+    if (!context || context.loading) {
         return (
             <div className="animate-pulse">
                 <div className="h-48 bg-muted/50 rounded-xl" />
             </div>
         );
     }
+
+    const { kpis } = context;
 
     const funnelSteps = [
         {

@@ -1,3 +1,4 @@
+import { useContext } from 'react';
 import {
     AreaChart,
     Area,
@@ -11,7 +12,8 @@ import {
     Cell
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTraffic } from '@/context/TrafficContext';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 
 // Mock daily data since our main mock is aggregate
 const dailyData = Array.from({ length: 30 }, (_, i) => ({
@@ -21,10 +23,16 @@ const dailyData = Array.from({ length: 30 }, (_, i) => ({
 })).map(d => ({ ...d, cpl: d.spend / d.leads }));
 
 export function TrafficCharts() {
-    const { filteredCampaigns } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
+
+    if (!context || context.loading) return null;
+
+    const campaigns = context.campaigns || [];
 
     // Prepare Campaign CPL data for bar chart
-    const campaignData = filteredCampaigns.map(c => ({
+    const campaignData = campaigns.map(c => ({
         name: c.name.split(' - ')[0].replace('[GITA] ', ''), // simplify name
         cpl: c.cpl,
         leads: c.leads

@@ -18,7 +18,7 @@ interface PublicDashboardContextType {
     } | null;
 }
 
-const PublicDashboardContext = createContext<PublicDashboardContextType | undefined>(undefined);
+export const PublicDashboardContext = createContext<PublicDashboardContextType | undefined>(undefined);
 
 export function PublicDashboardProvider({ token, children }: { token: string; children: ReactNode }) {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);

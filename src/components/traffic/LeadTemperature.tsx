@@ -1,11 +1,15 @@
-import { useTraffic } from '@/context/TrafficContext';
+import { useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
+import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Flame, Snowflake, TrendingUp } from 'lucide-react';
 
 export function LeadTemperature() {
-    const { kpis, loading } = useTraffic();
+    const publicContext = useContext(PublicDashboardContext);
+    const privateContext = useContext(TrafficContext);
+    const context = publicContext || privateContext;
 
-    if (loading) {
+    if (!context || context.loading) {
         return (
             <div className="animate-pulse">
                 <div className="h-64 bg-muted/50 rounded-xl" />
@@ -13,6 +17,7 @@ export function LeadTemperature() {
         );
     }
 
+    const { kpis } = context;
     const totalTemperatureLeads = kpis.totalHotLeads + kpis.totalColdLeads;
     const hotPercentage = totalTemperatureLeads > 0 ? (kpis.totalHotLeads / totalTemperatureLeads) * 100 : 0;
     const coldPercentage = totalTemperatureLeads > 0 ? (kpis.totalColdLeads / totalTemperatureLeads) * 100 : 0;
@@ -32,7 +37,7 @@ export function LeadTemperature() {
                             Classificação de qualidade dos leads captados
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/50 backdrop-blur-sm border border-white/10">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/50 backdrop-blur-sm border-white/10">
                         <TrendingUp className="h-4 w-4 text-primary" />
                         <span className="text-sm font-semibold">{totalTemperatureLeads.toLocaleString('pt-BR')} Total</span>
                     </div>
