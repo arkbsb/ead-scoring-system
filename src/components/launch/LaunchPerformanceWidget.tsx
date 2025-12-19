@@ -17,7 +17,12 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
     const realMetrics = useMemo(() => {
         if (!launch || !campaigns || campaigns.length === 0) return { invested: 0, leads: 0, cpl: 0 };
 
-        const linkedCampaigns = campaigns.filter((c: any) => launch.linkedCampaignIds.includes(c.id));
+        // Fallback: If no campaigns are linked, use ALL campaigns from the current dashboard
+        // This is useful for public shares where the user expects the global view to match the launch goals
+        const linkedIds = launch.linkedCampaignIds || [];
+        const linkedCampaigns = linkedIds.length > 0
+            ? campaigns.filter((c: any) => linkedIds.includes(c.id))
+            : campaigns;
 
         const invested = linkedCampaigns.reduce((acc: number, c: any) => acc + c.spend, 0);
         const leads = linkedCampaigns.reduce((acc: number, c: any) => acc + c.leads, 0);

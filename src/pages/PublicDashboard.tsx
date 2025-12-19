@@ -72,17 +72,21 @@ function PublicDashboardContent() {
                         {/* Summary Metrics */}
                         <TrafficKPIs />
 
-                        {/* Active Launch Widget */}
+                        {/* Progresso das Metas do Lançamento */}
                         {launch && (
-                            <div className="mb-8 p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50" />
-                                <div className="flex items-center gap-2 mb-4">
-                                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        Lançamento Ativo: {launch.name}
+                            <div className="space-y-4">
+                                <div className="flex flex-col gap-1">
+                                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                        🚀 Acompanhamento de Metas: {launch.name}
                                     </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Acompanhamento em tempo real do investimento, captação e eficiência do lançamento.
+                                    </p>
                                 </div>
-                                <LaunchPerformanceWidget launch={launch} campaigns={campaigns} />
+                                <div className="p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50" />
+                                    <LaunchPerformanceWidget launch={launch} campaigns={campaigns} />
+                                </div>
                             </div>
                         )}
 
