@@ -26,7 +26,7 @@ interface TrafficContextType {
     kpis: DashboardKPIs;
 }
 
-const TrafficContext = createContext<TrafficContextType | undefined>(undefined);
+export const TrafficContext = createContext<TrafficContextType | undefined>(undefined);
 
 export function TrafficProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
@@ -144,32 +144,55 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
         const initial: DashboardKPIs = {
             totalSpend: 0,
             totalLeads: 0,
+            totalOrganicLeads: 0,
             averageCpl: 0,
             connectRate: 0,
             averageCtr: 0,
             conversionRate: 0,
             cpa: 0,
             roas: 0,
-            revenue: 0
+            revenue: 0,
+            totalImpressions: 0,
+            totalReach: 0,
+            totalLinkClicks: 0,
+            totalPageViews: 0,
+            totalHotLeads: 0,
+            totalColdLeads: 0,
+            bestLandingPage: '',
+            bestLandingPageLeads: 0
         };
 
         const totals = filteredCampaigns.reduce((acc, curr) => {
             return {
                 spend: acc.spend + curr.spend,
                 leads: acc.leads + curr.leads,
+                organicLeads: acc.organicLeads + (curr.organicLeads || 0),
+                hotLeads: acc.hotLeads + (curr.hotLeads || 0),
+                coldLeads: acc.coldLeads + (curr.coldLeads || 0),
                 impressions: acc.impressions + curr.impressions,
+                reach: acc.reach + curr.reach,
                 clicks: acc.clicks + curr.clicks,
                 linkClicks: acc.linkClicks + (curr.linkClicks || 0),
                 pageViews: acc.pageViews + (curr.pageViews || 0),
                 conversions: acc.conversions + curr.conversions,
             };
-        }, { spend: 0, leads: 0, impressions: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0 });
+        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0 });
+
+        // Find best performing landing page
+        const bestLP = filteredCampaigns.reduce((best, curr) => {
+            if (!curr.bestLandingPage) return best;
+            if (curr.bestLandingPageLeads > (best?.bestLandingPageLeads || 0)) {
+                return curr;
+            }
+            return best;
+        }, filteredCampaigns[0]);
 
         if (totals.spend === 0) return initial;
 
         return {
             totalSpend: totals.spend,
             totalLeads: totals.leads,
+            totalOrganicLeads: totals.organicLeads,
             averageCpl: totals.leads > 0 ? totals.spend / totals.leads : 0,
             averageCtr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
             // Connect Rate: Page Views / Link Clicks (Column K / Column J)
@@ -178,7 +201,15 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             conversionRate: totals.pageViews > 0 ? (totals.leads / totals.pageViews) * 100 : 0,
             cpa: totals.conversions > 0 ? totals.spend / totals.conversions : 0,
             revenue: 0, // Need revenue field in campaigns if available
-            roas: 0
+            roas: 0,
+            totalImpressions: totals.impressions,
+            totalReach: totals.reach,
+            totalLinkClicks: totals.linkClicks,
+            totalPageViews: totals.pageViews,
+            totalHotLeads: totals.hotLeads,
+            totalColdLeads: totals.coldLeads,
+            bestLandingPage: bestLP?.bestLandingPage || '',
+            bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0
         };
     }, [filteredCampaigns]);
 

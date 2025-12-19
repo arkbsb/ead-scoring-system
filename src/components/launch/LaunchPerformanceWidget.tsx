@@ -1,24 +1,26 @@
-import { useMemo } from 'react';
-import { useTraffic } from '@/context/TrafficContext';
+import { useMemo, useContext } from 'react';
+import { TrafficContext } from '@/context/TrafficContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, Users, Target } from 'lucide-react';
 import { Launch } from '@/lib/launch-types';
 
 interface LaunchPerformanceWidgetProps {
     launch: Launch;
+    campaigns?: any[];
 }
 
-export function LaunchPerformanceWidget({ launch }: LaunchPerformanceWidgetProps) {
-    const { campaigns } = useTraffic();
+export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }: LaunchPerformanceWidgetProps) {
+    const context = useContext(TrafficContext);
+    const campaigns = externalCampaigns || context?.campaigns || [];
 
     // Calculate Real Metrics based on Linked Campaigns
     const realMetrics = useMemo(() => {
         if (!launch || !campaigns || campaigns.length === 0) return { invested: 0, leads: 0, cpl: 0 };
 
-        const linkedCampaigns = campaigns.filter(c => launch.linkedCampaignIds.includes(c.id));
+        const linkedCampaigns = campaigns.filter((c: any) => launch.linkedCampaignIds.includes(c.id));
 
-        const invested = linkedCampaigns.reduce((acc, c) => acc + c.spend, 0);
-        const leads = linkedCampaigns.reduce((acc, c) => acc + c.leads, 0);
+        const invested = linkedCampaigns.reduce((acc: number, c: any) => acc + c.spend, 0);
+        const leads = linkedCampaigns.reduce((acc: number, c: any) => acc + c.leads, 0);
         const cpl = leads > 0 ? invested / leads : 0;
 
         return { invested, leads, cpl };

@@ -17,7 +17,54 @@ const parseNumber = (val: any): number => {
     return parseFloat(str) || 0;
 };
 
+// Export parseCampaigns as a public function for use in other modules
+export function parseCampaigns(rows: string[][]): Campaign[] {
+    // Expected: Data e Hora | Nome da Campanha | Valor gasto | impressões | clicks | cpc | cpm | ctr | alcance | visualização página | Lead
+    // Index:        0       |         1        |      2      |      3     |    4   |  5  |  6  |  7  |    8    |          9          |  11
+    // We assume headers are row 0, data starts row 1
 
+    return rows.slice(1).map((row, idx) => {
+        const name = row[1] || `Campaign ${idx + 1}`;
+        const spend = parseCurrency(row[2]);
+        const impressions = parseNumber(row[3]);
+        const clicks = parseNumber(row[4]);
+        const linkClicks = parseNumber(row[9]); // Column J
+        const pageViews = parseNumber(row[10]); // Column K
+        const leads = parseNumber(row[11]); // Column L
+        const organicLeads = parseNumber(row[12]); // Column M - Organic Leads
+        const hotLeads = parseNumber(row[13]); // Column N - Hot Leads
+        const coldLeads = parseNumber(row[14]); // Column O - Cold Leads
+        const bestLandingPage = row[15] || ''; // Column P - Best Landing Page
+        const bestLandingPageLeads = parseNumber(row[16]); // Column Q - Leads from Best LP
+
+        // Recalculate derived metrics to ensure consistency
+        return {
+            id: `cmp-${idx}`, // In lack of a real ID
+            name: name,
+            status: 'active', // Default as not provided in columns
+            objective: 'TRAFFIC', // Default
+            startDate: row[0] || new Date().toISOString(),
+            impressions,
+            clicks,
+            linkClicks,
+            pageViews,
+            spend,
+            leads,
+            organicLeads,
+            hotLeads,
+            coldLeads,
+            bestLandingPage,
+            bestLandingPageLeads,
+            reach: parseNumber(row[8]),
+            ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+            cpc: clicks > 0 ? spend / clicks : 0,
+            cpm: impressions > 0 ? (spend / impressions) * 1000 : 0,
+            cpl: leads > 0 ? spend / leads : 0,
+            conversions: 0, // Not in columns
+            engagement: 0   // Not in columns
+        };
+    });
+}
 
 export class TrafficSheetParser {
 
@@ -33,7 +80,7 @@ export class TrafficSheetParser {
             ]);
 
             return {
-                campaigns: this.parseCampaigns(campaignsData),
+                campaigns: parseCampaigns(campaignsData),
                 adSets: this.parseAdSets(adSetsData),
                 ads: this.parseAds(adsData)
             };
@@ -41,44 +88,6 @@ export class TrafficSheetParser {
             console.error("Error fetching traffic data:", error);
             throw error;
         }
-    }
-
-    private static parseCampaigns(rows: string[][]): Campaign[] {
-        // Expected: Data e Hora | Nome da Campanha | Valor gasto | impressões | clicks | cpc | cpm | ctr | alcance | visualização página | Lead
-        // Index:        0       |         1        |      2      |      3     |    4   |  5  |  6  |  7  |    8    |          9          |  11
-        // We assume headers are row 0, data starts row 1
-
-        return rows.slice(1).map((row, idx) => {
-            const name = row[1] || `Campaign ${idx + 1}`;
-            const spend = parseCurrency(row[2]);
-            const impressions = parseNumber(row[3]);
-            const clicks = parseNumber(row[4]);
-            const linkClicks = parseNumber(row[9]); // Column J
-            const pageViews = parseNumber(row[10]); // Column K
-            const leads = parseNumber(row[11]); // Column L
-
-            // Recalculate derived metrics to ensure consistency
-            return {
-                id: `cmp-${idx}`, // In lack of a real ID
-                name: name,
-                status: 'active', // Default as not provided in columns
-                objective: 'TRAFFIC', // Default
-                startDate: row[0] || new Date().toISOString(),
-                impressions,
-                clicks,
-                linkClicks,
-                pageViews,
-                spend,
-                leads,
-                reach: parseNumber(row[8]),
-                ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
-                cpc: clicks > 0 ? spend / clicks : 0,
-                cpm: impressions > 0 ? (spend / impressions) * 1000 : 0,
-                cpl: leads > 0 ? spend / leads : 0,
-                conversions: 0, // Not in columns
-                engagement: 0   // Not in columns
-            };
-        });
     }
 
     private static parseAdSets(rows: string[][]): AdSet[] {

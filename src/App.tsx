@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Leads } from '@/pages/Leads';
 import { Analysis } from '@/pages/Analysis';
 import { TrafficDashboard } from '@/pages/traffic/TrafficDashboard';
+import { PublicDashboard } from '@/pages/PublicDashboard';
 import { Settings } from '@/pages/Settings';
 import { Login } from '@/pages/Login';
 import { LeadsProvider } from '@/context/LeadsContext';
@@ -39,6 +40,7 @@ function App() {
                   <Routes>
                     {/* Public Routes */}
                     <Route path="/login" element={<Login />} />
+                    <Route path="/public/:token" element={<PublicDashboard />} />
 
                     {/* Protected Routes */}
                     <Route

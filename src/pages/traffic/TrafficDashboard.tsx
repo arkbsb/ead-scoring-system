@@ -1,9 +1,14 @@
 import { TrafficProvider, useTraffic } from '@/context/TrafficContext';
-import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
+import { TrafficFunnel } from '@/components/traffic/TrafficFunnel';
+import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMetrics';
+import { LeadTemperature } from '@/components/traffic/LeadTemperature';
+import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
 import { TrafficCharts } from '@/components/traffic/TrafficCharts';
 import { TrafficTables } from '@/components/traffic/TrafficTables';
 // import { TrafficFilters } from '@/components/traffic/TrafficFilters'; // To be implemented later if needed
 import { TrafficSheetConfig } from '@/components/traffic/TrafficSheetConfig';
+import { ShareDashboardButton } from '@/components/traffic/ShareDashboardButton';
+import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
 import { RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLaunch } from '@/context/LaunchContext';
@@ -26,13 +31,8 @@ function DashboardContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Debug Info */}
-                    <div className="hidden md:flex flex-col items-end text-[10px] text-muted-foreground mr-2 leading-tight">
-                        <span>ID: {spreadsheetId ? `${spreadsheetId.substring(0, 6)}...` : 'Nenhum'}</span>
-                        <span>Fonte: {campaigns.length > 0 && campaigns[0].id.includes('cmp-') ? 'REAL' : 'MOCK'}</span>
-                        <span>Leads Parseados: {campaigns.reduce((a, b) => a + b.leads, 0)}</span>
-                    </div>
                     <TrafficSheetConfig />
+                    <ShareDashboardButton spreadsheetId={spreadsheetId} />
                     <button
                         onClick={refreshData}
                         disabled={loading}
@@ -54,6 +54,9 @@ function DashboardContent() {
                 </div>
             )}
 
+            {/* General KPIs */}
+            <TrafficKPIs />
+
             {/* Active Launch Widget */}
             {activeLaunch && (
                 <div className="mb-8 p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
@@ -69,7 +72,10 @@ function DashboardContent() {
             )}
 
             {/* Main Content */}
-            <TrafficKPIs />
+            <TrafficFunnel />
+            <TrafficSecondaryMetrics />
+            <LeadTemperature />
+            <LandingPagePerformance />
             <TrafficCharts />
             <TrafficTables />
         </div>

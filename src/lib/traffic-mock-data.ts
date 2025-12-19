@@ -47,6 +47,11 @@ export function generateMockData(): { campaigns: Campaign[]; adSets: AdSet[]; ad
             pageViews,
             spend,
             leads,
+            organicLeads: randomInt(10, 150), // Mock organic leads
+            hotLeads: randomInt(Math.floor(leads * 0.3), Math.floor(leads * 0.6)), // 30-60% hot
+            coldLeads: randomInt(Math.floor(leads * 0.2), Math.floor(leads * 0.5)), // 20-50% cold
+            bestLandingPage: `LP ${c} - ${['Produto', 'Webinar', 'Ebook', 'Trial'][c % 4]}`,
+            bestLandingPageLeads: randomInt(Math.floor(leads * 0.4), Math.floor(leads * 0.8)),
             conversions,
             ctr: (clicks / impressions) * 100,
             cpc: spend / clicks,

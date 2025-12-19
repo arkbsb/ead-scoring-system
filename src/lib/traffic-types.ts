@@ -26,6 +26,11 @@ export interface Campaign extends BaseEntity {
     startDate: string;
     endDate?: string;
     objective: string; // 'CONVERSION', 'TRAFFIC', 'AWARENESS'
+    organicLeads: number; // Column M - Organic leads captured
+    hotLeads: number; // Column N - Hot leads
+    coldLeads: number; // Column O - Cold leads
+    bestLandingPage: string; // Column P - Best performing landing page
+    bestLandingPageLeads: number; // Column Q - Leads from best LP
 }
 
 export interface AdSet extends BaseEntity {
@@ -46,6 +51,7 @@ export interface Ad extends BaseEntity {
 export interface DashboardKPIs {
     totalSpend: number;
     totalLeads: number;
+    totalOrganicLeads: number; // Sum of organic leads from all campaigns
     averageCpl: number;
     connectRate: number; // (Leads / Clicks) * 100
     averageCtr: number;
@@ -53,6 +59,20 @@ export interface DashboardKPIs {
     cpa: number; // Spend / Conversions
     roas: number; // Revenue / Spend
     revenue: number; // Optional input
+
+    // Funnel metrics
+    totalImpressions: number;
+    totalReach: number;
+    totalLinkClicks: number;
+    totalPageViews: number;
+
+    // Temperature metrics
+    totalHotLeads: number;
+    totalColdLeads: number;
+
+    // Landing page performance
+    bestLandingPage: string;
+    bestLandingPageLeads: number;
 }
 
 export interface TrafficFilterState {
