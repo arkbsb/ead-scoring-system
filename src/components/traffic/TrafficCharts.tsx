@@ -174,9 +174,9 @@ export function TrafficCharts() {
                                             borderRadius: '12px',
                                             backdropFilter: 'blur(10px)'
                                         }}
-                                        formatter={(value: any, name: string) => [
+                                        formatter={(value: any, name: string | undefined) => [
                                             name === 'cpl' ? `R$ ${Number(value).toFixed(2)}` : value,
-                                            name === 'cpl' ? 'CPL' : 'Leads'
+                                            name === 'cpl' ? 'CPL' : (name === 'leads' ? 'Leads' : name || '')
                                         ]}
                                     />
                                     <Bar dataKey="cpl" name="Custo por Lead" radius={[0, 4, 4, 0]}>
