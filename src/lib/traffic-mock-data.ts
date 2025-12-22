@@ -52,6 +52,9 @@ export function generateMockData(): { campaigns: Campaign[]; adSets: AdSet[]; ad
             coldLeads: randomInt(Math.floor(leads * 0.2), Math.floor(leads * 0.5)), // 20-50% cold
             bestLandingPage: `LP ${c} - ${['Produto', 'Webinar', 'Ebook', 'Trial'][c % 4]}`,
             bestLandingPageLeads: randomInt(Math.floor(leads * 0.4), Math.floor(leads * 0.8)),
+            leads1a1: randomInt(Math.floor(leads * 0.1), Math.floor(leads * 0.3)),
+            mandouMsgApi: randomInt(Math.floor(leads * 0.05), Math.floor(leads * 0.15)),
+            respondeuPesquisa: randomInt(Math.floor(leads * 0.5), Math.floor(leads * 0.8)),
             conversions,
             ctr: (clicks / impressions) * 100,
             cpc: spend / clicks,

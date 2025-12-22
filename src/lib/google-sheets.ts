@@ -4,7 +4,7 @@ import { calculateScore, getSegmentation } from './scoring';
 export interface ScoreRule {
     value: string;
     score: number;
-    matchType: 'equals' | 'contains';
+    matchType: 'equals' | 'contains' | 'not_empty';
 }
 
 export interface ColumnMapping {
@@ -130,6 +130,9 @@ export const parseSheetData = (data: string[][], config?: GoogleSheetConfig): Le
                             const ruleVal = r.value.trim().toLowerCase();
                             if (r.matchType === 'contains') {
                                 return cellValStr.includes(ruleVal);
+                            }
+                            if (r.matchType === 'not_empty') {
+                                return cellValStr.length > 0;
                             }
                             return cellValStr === ruleVal;
                         });

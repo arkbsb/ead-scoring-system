@@ -31,6 +31,9 @@ export interface Campaign extends BaseEntity {
     coldLeads: number; // Column O - Cold leads
     bestLandingPage: string; // Column P - Best performing landing page
     bestLandingPageLeads: number; // Column Q - Leads from best LP
+    leads1a1: number; // Column R - Leads from 1a1 API
+    mandouMsgApi: number; // Column S - Contacted via API
+    respondeuPesquisa: number; // Column T - Answered survey
 }
 
 export interface AdSet extends BaseEntity {
@@ -73,6 +76,9 @@ export interface DashboardKPIs {
     // Landing page performance
     bestLandingPage: string;
     bestLandingPageLeads: number;
+    totalLeads1a1: number;
+    totalMandouMsgApi: number;
+    totalRespondeuPesquisa: number;
 }
 
 export interface TrafficFilterState {

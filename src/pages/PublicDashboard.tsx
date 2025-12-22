@@ -5,13 +5,14 @@ import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMe
 import { LeadTemperature } from '@/components/traffic/LeadTemperature';
 import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
 import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
-import { TrafficCharts } from '@/components/traffic/TrafficCharts';
+// import { TrafficCharts } from '@/components/traffic/TrafficCharts';
 import { TrafficTables } from '@/components/traffic/TrafficTables';
+// import { TrafficEngagement } from '@/components/traffic/TrafficEngagement';
 import { Eye, AlertCircle } from 'lucide-react';
 import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWidget';
 
 function PublicDashboardContent() {
-    const { loading, error, shareInfo, launch, campaigns } = usePublicDashboard();
+    const { loading, error, shareInfo, launch, filteredCampaigns } = usePublicDashboard();
 
     if (loading) {
         return (
@@ -87,14 +88,14 @@ function PublicDashboardContent() {
                                 </div>
                                 <div className="p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50" />
-                                    <LaunchPerformanceWidget launch={launch} campaigns={campaigns} />
+                                    <LaunchPerformanceWidget launch={launch} campaigns={filteredCampaigns} />
                                 </div>
                             </div>
                         )}
 
                         <TrafficFunnel />
                         <TrafficSecondaryMetrics />
-                        <TrafficCharts />
+                        {/* <TrafficCharts /> */}
                         <LeadTemperature />
                         <LandingPagePerformance />
                         <TrafficTables />

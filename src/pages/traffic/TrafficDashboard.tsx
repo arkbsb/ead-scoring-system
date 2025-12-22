@@ -3,12 +3,13 @@ import { TrafficFunnel } from '@/components/traffic/TrafficFunnel';
 import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMetrics';
 import { LeadTemperature } from '@/components/traffic/LeadTemperature';
 import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
-import { TrafficCharts } from '@/components/traffic/TrafficCharts';
+// import { TrafficCharts } from '@/components/traffic/TrafficCharts';
 import { TrafficTables } from '@/components/traffic/TrafficTables';
 // import { TrafficFilters } from '@/components/traffic/TrafficFilters'; // To be implemented later if needed
 import { TrafficSheetConfig } from '@/components/traffic/TrafficSheetConfig';
 import { ShareDashboardButton } from '@/components/traffic/ShareDashboardButton';
 import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
+// import { TrafficEngagement } from '@/components/traffic/TrafficEngagement';
 import { RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLaunch } from '@/context/LaunchContext';
@@ -54,6 +55,7 @@ function DashboardContent() {
                 </div>
             )}
 
+
             {/* General KPIs */}
             <TrafficKPIs />
 
@@ -76,7 +78,7 @@ function DashboardContent() {
             <TrafficSecondaryMetrics />
             <LeadTemperature />
             <LandingPagePerformance />
-            <TrafficCharts />
+            {/* <TrafficCharts /> */}
             <TrafficTables />
         </div>
     );

@@ -17,6 +17,27 @@ const parseNumber = (val: any): number => {
     return parseFloat(str) || 0;
 };
 
+// Helper to parse dates "DD/MM/YYYY HH:mm:ss" or ISO
+const parseDate = (val: any): string => {
+    if (!val) return new Date().toISOString();
+    const str = String(val).trim();
+
+    // Check for DD/MM/YYYY
+    const brDateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+    const match = str.match(brDateRegex);
+
+    if (match) {
+        const [_, day, month, year] = match;
+        // month is 0-indexed in JS Date
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        return date.toISOString();
+    }
+
+    // Fallback to native parsing
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 // Export parseCampaigns as a public function for use in other modules
 export function parseCampaigns(rows: string[][]): Campaign[] {
     // Expected: Data e Hora | Nome da Campanha | Valor gasto | impressões | clicks | cpc | cpm | ctr | alcance | visualização página | Lead
@@ -36,6 +57,9 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
         const coldLeads = parseNumber(row[14]); // Column O - Cold Leads
         const bestLandingPage = row[15] || ''; // Column P - Best Landing Page
         const bestLandingPageLeads = parseNumber(row[16]); // Column Q - Leads from Best LP
+        const leads1a1 = parseNumber(row[17]); // Column R
+        const mandouMsgApi = parseNumber(row[18]); // Column S
+        const respondeuPesquisa = parseNumber(row[19]); // Column T
 
         // Recalculate derived metrics to ensure consistency
         return {
@@ -43,7 +67,7 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
             name: name,
             status: 'active', // Default as not provided in columns
             objective: 'TRAFFIC', // Default
-            startDate: row[0] || new Date().toISOString(),
+            startDate: parseDate(row[0]),
             impressions,
             clicks,
             linkClicks,
@@ -55,6 +79,9 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
             coldLeads,
             bestLandingPage,
             bestLandingPageLeads,
+            leads1a1,
+            mandouMsgApi,
+            respondeuPesquisa,
             reach: parseNumber(row[8]),
             ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
             cpc: clicks > 0 ? spend / clicks : 0,
@@ -111,7 +138,7 @@ export class TrafficSheetParser {
                 name,
                 status: 'active',
                 segmentation: 'General',
-                startDate: row[0] || new Date().toISOString(),
+                startDate: parseDate(row[0]),
                 impressions,
                 clicks,
                 linkClicks,
@@ -148,7 +175,7 @@ export class TrafficSheetParser {
                 name,
                 status: 'active',
                 format: 'IMAGE', // Default
-                startDate: row[0] || new Date().toISOString(),
+                startDate: parseDate(row[0]),
                 impressions,
                 clicks,
                 linkClicks,

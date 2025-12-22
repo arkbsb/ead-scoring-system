@@ -12,7 +12,7 @@ const AVAILABLE_FIELDS: { value: keyof Lead | 'ignore', label: string, isScorabl
     { value: 'ignore', label: 'Ignorar Coluna', isScorable: false },
     { value: 'name', label: 'Nome Completo', isScorable: false },
     { value: 'email', label: 'Email', isScorable: false },
-    { value: 'whatsapp', label: 'WhatsApp', isScorable: false },
+    { value: 'whatsapp', label: 'WhatsApp', isScorable: true },
     { value: 'timestamp', label: 'Data/Hora', isScorable: false },
 
     // UTM / Analytics
@@ -249,6 +249,7 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                                         <select id={`new-type-${index}`} className="w-full h-8 rounded border border-input px-1 text-xs bg-background">
                                                                             <option value="equals">Igual</option>
                                                                             <option value="contains">Contém</option>
+                                                                            <option value="not_empty">Preenchido</option>
                                                                         </select>
                                                                     </div>
                                                                     <div className="space-y-1">
@@ -268,16 +269,21 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                                             const scoreInput = document.getElementById(`new-score-${index}`) as HTMLInputElement;
                                                                             const typeInput = document.getElementById(`new-type-${index}`) as HTMLSelectElement;
 
-                                                                            if (valInput.value) {
+                                                                            if (typeInput.value === 'not_empty' || valInput.value) {
                                                                                 const newMappings = [...mappings];
                                                                                 const rules = newMappings[index].scoreRules || [];
+
+                                                                                // For not_empty, value field is effectively matches anything, but we need a key
+                                                                                // We'll use '*' or similar for display/internal consistency
+                                                                                const ruleValue = typeInput.value === 'not_empty' ? '*' : valInput.value;
+
                                                                                 // Remove existing if duplicate value to avoid confusion
-                                                                                const cleanRules = rules.filter(r => r.value !== valInput.value);
+                                                                                const cleanRules = rules.filter(r => r.value !== ruleValue);
 
                                                                                 cleanRules.push({
-                                                                                    value: valInput.value,
+                                                                                    value: ruleValue,
                                                                                     score: Number(scoreInput.value),
-                                                                                    matchType: typeInput.value as 'equals' | 'contains'
+                                                                                    matchType: typeInput.value as 'equals' | 'contains' | 'not_empty'
                                                                                 });
 
                                                                                 newMappings[index].scoreRules = cleanRules;
@@ -302,10 +308,15 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                                 {(map.scoreRules || []).map((rule, rIndex) => (
                                                                     <div key={rIndex} className="flex items-center gap-2 bg-background p-1.5 rounded border border-dashed text-xs group">
                                                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono
-                                                                            ${rule.matchType === 'contains' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                                                                            {rule.matchType === 'contains' ? 'CONTÉM' : 'IGUAL'}
+                                                                            ${rule.matchType === 'contains' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                                                rule.matchType === 'not_empty' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                                            {rule.matchType === 'contains' ? 'CONTÉM' :
+                                                                                rule.matchType === 'not_empty' ? 'PREENCHIDO' : 'IGUAL'}
                                                                         </span>
-                                                                        <span className="flex-1 font-medium truncate" title={rule.value}>{rule.value}</span>
+                                                                        <span className="flex-1 font-medium truncate" title={rule.value}>
+                                                                            {rule.matchType === 'not_empty' ? 'Qualquer valor' : rule.value}
+                                                                        </span>
 
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="font-bold text-emerald-600 dark:text-emerald-400">{rule.score} pts</span>

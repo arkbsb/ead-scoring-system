@@ -130,12 +130,12 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
 
     const filteredCampaigns = useMemo(() => {
         return data.campaigns.filter(c => {
+
             // Status Filter
             if (filters.status.length > 0 && !filters.status.includes(c.status)) return false;
             // Objective Filter
             if (filters.objective.length > 0 && !filters.objective.includes(c.objective)) return false;
-            // Search/IDs is handled mostly by UI selection, but if we had a search term:
-            // if (filters.search && !c.name.includes(filters.search)) return false;
+
             return true;
         });
     }, [data.campaigns, filters]);
@@ -159,7 +159,10 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             totalHotLeads: 0,
             totalColdLeads: 0,
             bestLandingPage: '',
-            bestLandingPageLeads: 0
+            bestLandingPageLeads: 0,
+            totalLeads1a1: 0,
+            totalMandouMsgApi: 0,
+            totalRespondeuPesquisa: 0
         };
 
         const totals = filteredCampaigns.reduce((acc, curr) => {
@@ -175,8 +178,11 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
                 linkClicks: acc.linkClicks + (curr.linkClicks || 0),
                 pageViews: acc.pageViews + (curr.pageViews || 0),
                 conversions: acc.conversions + curr.conversions,
+                leads1a1: acc.leads1a1 + (curr.leads1a1 || 0),
+                mandouMsgApi: acc.mandouMsgApi + (curr.mandouMsgApi || 0),
+                respondeuPesquisa: acc.respondeuPesquisa + (curr.respondeuPesquisa || 0),
             };
-        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0 });
+        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0 });
 
         // Find best performing landing page
         const bestLP = filteredCampaigns.reduce((best, curr) => {
@@ -194,7 +200,7 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             totalLeads: totals.leads,
             totalOrganicLeads: totals.organicLeads,
             averageCpl: totals.leads > 0 ? totals.spend / totals.leads : 0,
-            averageCtr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
+            averageCtr: totals.impressions > 0 ? (totals.linkClicks / totals.impressions) * 100 : 0,
             // Connect Rate: Page Views / Link Clicks (Column K / Column J)
             connectRate: totals.linkClicks > 0 ? (totals.pageViews / totals.linkClicks) * 100 : 0,
             // LP Conversion Rate: Leads / Page Views (How many visitors became leads)
@@ -209,7 +215,10 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             totalHotLeads: totals.hotLeads,
             totalColdLeads: totals.coldLeads,
             bestLandingPage: bestLP?.bestLandingPage || '',
-            bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0
+            bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0,
+            totalLeads1a1: totals.leads1a1,
+            totalMandouMsgApi: totals.mandouMsgApi,
+            totalRespondeuPesquisa: totals.respondeuPesquisa
         };
     }, [filteredCampaigns]);
 

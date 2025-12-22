@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getPublicShare, incrementViewCount } from '@/lib/public-share';
-import { parseCampaigns } from '@/lib/traffic-integration';
+import { parseCampaigns, TrafficSheetParser } from '@/lib/traffic-integration';
 import { fetchGoogleSheetData } from '@/lib/google-sheets';
-import type { Campaign, DashboardKPIs } from '@/lib/traffic-types';
+import type { Campaign, AdSet, Ad, DashboardKPIs } from '@/lib/traffic-types';
 import type { Launch } from '@/lib/launch-types';
 
 interface PublicDashboardContextType {
     campaigns: Campaign[];
+    adSets: AdSet[];
+    ads: Ad[];
     kpis: DashboardKPIs;
     loading: boolean;
     error: string | null;
@@ -16,16 +18,30 @@ interface PublicDashboardContextType {
         viewCount: number;
         createdAt: string;
     } | null;
+    filters: {
+        dateRange: { from: Date | undefined; to: Date | undefined };
+        status: string[];
+        objective: string[];
+    };
+    setFilters: (filters: any) => void;
+    filteredCampaigns: Campaign[];
 }
 
 export const PublicDashboardContext = createContext<PublicDashboardContextType | undefined>(undefined);
 
 export function PublicDashboardProvider({ token, children }: { token: string; children: ReactNode }) {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [adSets, setAdSets] = useState<AdSet[]>([]);
+    const [ads, setAds] = useState<Ad[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [launch, setLaunch] = useState<Launch | null>(null);
     const [shareInfo, setShareInfo] = useState<{ viewCount: number; createdAt: string } | null>(null);
+    const [filters, setFilters] = useState({
+        dateRange: { from: undefined as Date | undefined, to: undefined as Date | undefined },
+        status: [] as string[],
+        objective: [] as string[]
+    });
 
     useEffect(() => {
         loadPublicDashboard();
@@ -55,16 +71,25 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
 
             // Fetch traffic data
             if (share.spreadsheet_id) {
-                const sheetData = await fetchGoogleSheetData({
-                    id: 'public-traffic',
-                    name: 'Public Traffic',
-                    spreadsheetId: share.spreadsheet_id,
-                    sheetName: 'Campanhas'
-                });
+                try {
+                    const trafficData = await TrafficSheetParser.fetchAndParse(share.spreadsheet_id);
+                    setCampaigns(trafficData.campaigns);
+                    setAdSets(trafficData.adSets);
+                    setAds(trafficData.ads);
+                } catch (trafficErr) {
+                    console.error("Failed to fetch public traffic data:", trafficErr);
+                    // Fallback to minimal fetch if complete fetch fails
+                    const sheetData = await fetchGoogleSheetData({
+                        id: 'public-traffic',
+                        name: 'Public Traffic',
+                        spreadsheetId: share.spreadsheet_id,
+                        sheetName: 'Campanhas'
+                    });
 
-                if (sheetData && sheetData.length > 0) {
-                    const parsedCampaigns = parseCampaigns(sheetData);
-                    setCampaigns(parsedCampaigns);
+                    if (sheetData && sheetData.length > 0) {
+                        const parsedCampaigns = parseCampaigns(sheetData);
+                        setCampaigns(parsedCampaigns);
+                    }
                 }
             }
 
@@ -105,6 +130,18 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
         }
     };
 
+    const filteredCampaigns = useMemo(() => {
+        return campaigns.filter(c => {
+
+            // Status Filter
+            if (filters.status.length > 0 && !filters.status.includes(c.status)) return false;
+            // Objective Filter
+            if (filters.objective.length > 0 && !filters.objective.includes(c.objective)) return false;
+
+            return true;
+        });
+    }, [campaigns, filters]);
+
     const kpis = useMemo<DashboardKPIs>(() => {
         const initial: DashboardKPIs = {
             totalSpend: 0,
@@ -124,10 +161,13 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             totalHotLeads: 0,
             totalColdLeads: 0,
             bestLandingPage: '',
-            bestLandingPageLeads: 0
+            bestLandingPageLeads: 0,
+            totalLeads1a1: 0,
+            totalMandouMsgApi: 0,
+            totalRespondeuPesquisa: 0
         };
 
-        const totals = campaigns.reduce((acc, curr) => {
+        const totals = filteredCampaigns.reduce((acc, curr) => {
             return {
                 spend: acc.spend + curr.spend,
                 leads: acc.leads + curr.leads,
@@ -140,16 +180,19 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
                 linkClicks: acc.linkClicks + (curr.linkClicks || 0),
                 pageViews: acc.pageViews + (curr.pageViews || 0),
                 conversions: acc.conversions + curr.conversions,
+                leads1a1: acc.leads1a1 + (curr.leads1a1 || 0),
+                mandouMsgApi: acc.mandouMsgApi + (curr.mandouMsgApi || 0),
+                respondeuPesquisa: acc.respondeuPesquisa + (curr.respondeuPesquisa || 0),
             };
-        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0 });
+        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0 });
 
-        const bestLP = campaigns.reduce((best, curr) => {
+        const bestLP = filteredCampaigns.reduce((best, curr) => {
             if (!curr.bestLandingPage) return best;
             if (curr.bestLandingPageLeads > (best?.bestLandingPageLeads || 0)) {
                 return curr;
             }
             return best;
-        }, campaigns[0]);
+        }, filteredCampaigns[0]);
 
         if (totals.spend === 0) return initial;
 
@@ -158,7 +201,7 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             totalLeads: totals.leads,
             totalOrganicLeads: totals.organicLeads,
             averageCpl: totals.leads > 0 ? totals.spend / totals.leads : 0,
-            averageCtr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
+            averageCtr: totals.impressions > 0 ? (totals.linkClicks / totals.impressions) * 100 : 0,
             connectRate: totals.linkClicks > 0 ? (totals.pageViews / totals.linkClicks) * 100 : 0,
             conversionRate: totals.pageViews > 0 ? (totals.leads / totals.pageViews) * 100 : 0,
             cpa: totals.conversions > 0 ? totals.spend / totals.conversions : 0,
@@ -171,12 +214,27 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             totalHotLeads: totals.hotLeads,
             totalColdLeads: totals.coldLeads,
             bestLandingPage: bestLP?.bestLandingPage || '',
-            bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0
+            bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0,
+            totalLeads1a1: totals.leads1a1,
+            totalMandouMsgApi: totals.mandouMsgApi,
+            totalRespondeuPesquisa: totals.respondeuPesquisa
         };
-    }, [campaigns]);
+    }, [filteredCampaigns]);
 
     return (
-        <PublicDashboardContext.Provider value={{ campaigns, kpis, loading, error, launch, shareInfo }}>
+        <PublicDashboardContext.Provider value={{
+            campaigns,
+            adSets,
+            ads,
+            kpis,
+            loading,
+            error,
+            launch,
+            shareInfo,
+            filters,
+            setFilters,
+            filteredCampaigns
+        }}>
             {children}
         </PublicDashboardContext.Provider>
     );
