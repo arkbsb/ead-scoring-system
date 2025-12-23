@@ -34,6 +34,7 @@ export interface Campaign extends BaseEntity {
     leads1a1: number; // Column R - Leads from 1a1 API
     mandouMsgApi: number; // Column S - Contacted via API
     respondeuPesquisa: number; // Column T - Answered survey
+    leadsGruposLegados: number; // Column U - Leads from Legacy Groups
 }
 
 export interface AdSet extends BaseEntity {
@@ -79,6 +80,7 @@ export interface DashboardKPIs {
     totalLeads1a1: number;
     totalMandouMsgApi: number;
     totalRespondeuPesquisa: number;
+    totalLeadsGruposLegados: number;
 }
 
 export interface TrafficFilterState {

@@ -61,6 +61,7 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
         const leads1a1 = parseNumber(row[17]); // Column R
         const mandouMsgApi = parseNumber(row[18]); // Column S
         const respondeuPesquisa = parseNumber(row[19]); // Column T
+        const leadsGruposLegados = parseNumber(row[20]); // Column U
 
         // Recalculate derived metrics to ensure consistency
         return {
@@ -83,6 +84,7 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
             leads1a1,
             mandouMsgApi,
             respondeuPesquisa,
+            leadsGruposLegados,
             reach: parseNumber(row[8]),
             ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
             cpc: clicks > 0 ? spend / clicks : 0,

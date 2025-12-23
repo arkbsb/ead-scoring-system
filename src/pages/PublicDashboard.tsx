@@ -3,6 +3,7 @@ import { PublicDashboardProvider, usePublicDashboard } from '@/context/PublicDas
 import { TrafficFunnel } from '@/components/traffic/TrafficFunnel';
 import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMetrics';
 import { LeadTemperature } from '@/components/traffic/LeadTemperature';
+import { TrafficBroadcastMetrics } from '@/components/traffic/TrafficBroadcastMetrics';
 import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
 import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
 // import { TrafficCharts } from '@/components/traffic/TrafficCharts';
@@ -71,9 +72,32 @@ function PublicDashboardContent() {
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none"></div>
 
                 <div className="container max-w-[1600px] mx-auto p-6 lg:p-10 relative z-10 animate-fade-in">
+
+                    {/* Data Error State */}
+                    {filteredCampaigns.length === 0 && !loading && (
+                        <div className="mb-8 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                            <div>
+                                <h3 className="text-sm font-bold text-yellow-500">Nenhum dado encontrado</h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Não foi possível carregar os dados de tráfego. Para visualizar publicamente:
+                                    <ul className="list-disc pl-4 mt-2 space-y-1">
+                                        <li>
+                                            A planilha <strong>PRECISA</strong> estar "Publicada na Web" (não apenas compartilhada).
+                                            <br />
+                                            <span className="text-xs opacity-80">Vá em: Arquivo &gt; Compartilhar &gt; Publicar na Web &gt; Publicar.</span>
+                                        </li>
+                                        <li>Verifique se as abas ("Campanhas", "Conjunto de Ads", "Anúncios") mantém esses nomes exatos.</li>
+                                    </ul>
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-8 pb-10">
                         {/* Summary Metrics */}
-                        <TrafficKPIs />
+                        {/* Summary Metrics - Only show if NO launch */}
+                        {!launch && <TrafficKPIs />}
 
                         {/* Progresso das Metas do Lançamento */}
                         {launch && (
@@ -96,7 +120,10 @@ function PublicDashboardContent() {
                         <TrafficFunnel />
                         <TrafficSecondaryMetrics />
                         {/* <TrafficCharts /> */}
-                        <LeadTemperature />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <LeadTemperature />
+                            <TrafficBroadcastMetrics />
+                        </div>
                         <LandingPagePerformance />
                         <TrafficTables />
                     </div>

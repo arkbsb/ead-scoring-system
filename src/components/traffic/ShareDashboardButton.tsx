@@ -47,8 +47,9 @@ export function ShareDashboardButton({ spreadsheetId }: ShareDashboardButtonProp
         );
 
         if (error) {
-            alert('Erro ao criar link de compartilhamento');
-            console.error(error);
+            console.error('Share creation error:', error);
+            const err = error as any;
+            alert(`Erro ao criar link: ${err.message || 'Erro desconhecido'} (${err.details || ''})`);
         } else {
             setActiveShare(data);
         }

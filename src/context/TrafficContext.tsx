@@ -162,7 +162,8 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             bestLandingPageLeads: 0,
             totalLeads1a1: 0,
             totalMandouMsgApi: 0,
-            totalRespondeuPesquisa: 0
+            totalRespondeuPesquisa: 0,
+            totalLeadsGruposLegados: 0
         };
 
         const totals = filteredCampaigns.reduce((acc, curr) => {
@@ -181,8 +182,9 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
                 leads1a1: acc.leads1a1 + (curr.leads1a1 || 0),
                 mandouMsgApi: acc.mandouMsgApi + (curr.mandouMsgApi || 0),
                 respondeuPesquisa: acc.respondeuPesquisa + (curr.respondeuPesquisa || 0),
+                leadsGruposLegados: acc.leadsGruposLegados + (curr.leadsGruposLegados || 0),
             };
-        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0 });
+        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0, leadsGruposLegados: 0 });
 
         // Find best performing landing page
         const bestLP = filteredCampaigns.reduce((best, curr) => {
@@ -218,7 +220,8 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0,
             totalLeads1a1: totals.leads1a1,
             totalMandouMsgApi: totals.mandouMsgApi,
-            totalRespondeuPesquisa: totals.respondeuPesquisa
+            totalRespondeuPesquisa: totals.respondeuPesquisa,
+            totalLeadsGruposLegados: totals.leadsGruposLegados
         };
     }, [filteredCampaigns]);
 

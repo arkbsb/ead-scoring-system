@@ -61,6 +61,8 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
                 return;
             }
 
+            console.log('Public Share Info:', share);
+
             setShareInfo({
                 viewCount: share.view_count,
                 createdAt: share.created_at
@@ -71,35 +73,53 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
 
             // Fetch traffic data
             if (share.spreadsheet_id) {
+                // ... existing logic ...
                 try {
+                    console.log('Fetching public traffic data...');
                     const trafficData = await TrafficSheetParser.fetchAndParse(share.spreadsheet_id);
+                    console.log('Parsed Traffic Data:', trafficData);
                     setCampaigns(trafficData.campaigns);
                     setAdSets(trafficData.adSets);
                     setAds(trafficData.ads);
                 } catch (trafficErr) {
-                    console.error("Failed to fetch public traffic data:", trafficErr);
-                    // Fallback to minimal fetch if complete fetch fails
-                    const sheetData = await fetchGoogleSheetData({
-                        id: 'public-traffic',
-                        name: 'Public Traffic',
-                        spreadsheetId: share.spreadsheet_id,
-                        sheetName: 'Campanhas'
-                    });
+                    console.error("Failed to fetch public traffic data (Main Parser):", trafficErr);
 
-                    if (sheetData && sheetData.length > 0) {
-                        const parsedCampaigns = parseCampaigns(sheetData);
-                        setCampaigns(parsedCampaigns);
+                    // Fallback to minimal fetch if complete fetch fails
+                    try {
+                        const sheetData = await fetchGoogleSheetData({
+                            id: 'public-traffic',
+                            name: 'Public Traffic',
+                            spreadsheetId: share.spreadsheet_id,
+                            sheetName: 'Campanhas'
+                        });
+
+                        console.log('Fallback Sheet Data Raw:', sheetData);
+
+                        if (sheetData && sheetData.length > 0) {
+                            const parsedCampaigns = parseCampaigns(sheetData);
+                            console.log('Fallback Parsed Campaigns:', parsedCampaigns);
+                            setCampaigns(parsedCampaigns);
+                        }
+                    } catch (fallbackErr) {
+                        console.error("Fallback fetch also failed:", fallbackErr);
                     }
                 }
             }
 
             // Fetch launch data if associated
             if (share.launch_id) {
+                console.log('Fetching public launch:', share.launch_id);
                 const { data: launchData, error: launchError } = await supabase
                     .from('launches')
                     .select('*')
                     .eq('id', share.launch_id)
                     .single();
+
+                if (launchError) {
+                    console.error('Error fetching public launch:', launchError);
+                } else {
+                    console.log('Public Launch Data:', launchData);
+                }
 
                 if (!launchError && launchData) {
                     setLaunch({
@@ -164,7 +184,8 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             bestLandingPageLeads: 0,
             totalLeads1a1: 0,
             totalMandouMsgApi: 0,
-            totalRespondeuPesquisa: 0
+            totalRespondeuPesquisa: 0,
+            totalLeadsGruposLegados: 0
         };
 
         const totals = filteredCampaigns.reduce((acc, curr) => {
@@ -183,8 +204,9 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
                 leads1a1: acc.leads1a1 + (curr.leads1a1 || 0),
                 mandouMsgApi: acc.mandouMsgApi + (curr.mandouMsgApi || 0),
                 respondeuPesquisa: acc.respondeuPesquisa + (curr.respondeuPesquisa || 0),
+                leadsGruposLegados: acc.leadsGruposLegados + (curr.leadsGruposLegados || 0),
             };
-        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0 });
+        }, { spend: 0, leads: 0, organicLeads: 0, hotLeads: 0, coldLeads: 0, impressions: 0, reach: 0, clicks: 0, linkClicks: 0, pageViews: 0, conversions: 0, leads1a1: 0, mandouMsgApi: 0, respondeuPesquisa: 0, leadsGruposLegados: 0 });
 
         const bestLP = filteredCampaigns.reduce((best, curr) => {
             if (!curr.bestLandingPage) return best;
@@ -217,7 +239,8 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             bestLandingPageLeads: bestLP?.bestLandingPageLeads || 0,
             totalLeads1a1: totals.leads1a1,
             totalMandouMsgApi: totals.mandouMsgApi,
-            totalRespondeuPesquisa: totals.respondeuPesquisa
+            totalRespondeuPesquisa: totals.respondeuPesquisa,
+            totalLeadsGruposLegados: totals.leadsGruposLegados
         };
     }, [filteredCampaigns]);
 

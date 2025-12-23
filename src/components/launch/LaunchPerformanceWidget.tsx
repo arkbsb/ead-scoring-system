@@ -20,9 +20,18 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
         // Fallback: If no campaigns are linked, use ALL campaigns from the current dashboard
         // This is useful for public shares where the user expects the global view to match the launch goals
         const linkedIds = launch.linkedCampaignIds || [];
-        const linkedCampaigns = linkedIds.length > 0
-            ? campaigns.filter((c: any) => linkedIds.includes(c.id))
-            : campaigns;
+        let linkedCampaigns = [];
+
+        if (linkedIds.length > 0) {
+            linkedCampaigns = campaigns.filter((c: any) => linkedIds.includes(c.id));
+        }
+
+        // FALLBACK: If linkedIds exist but NO campaigns matched (likely due to ID format change: index vs slug),
+        // or if no IDs are linked at all, fallback to using ALL campaigns.
+        if (linkedCampaigns.length === 0) {
+            console.warn("LaunchPerformanceWidget: No campaigns matched linked IDs. IDs might be stale or empty. Falling back to ALL campaigns.");
+            linkedCampaigns = campaigns;
+        }
 
         const invested = linkedCampaigns.reduce((acc: number, c: any) => acc + c.spend, 0);
         const leads = linkedCampaigns.reduce((acc: number, c: any) => acc + c.leads, 0);

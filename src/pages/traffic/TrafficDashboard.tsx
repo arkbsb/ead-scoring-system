@@ -2,6 +2,7 @@ import { TrafficProvider, useTraffic } from '@/context/TrafficContext';
 import { TrafficFunnel } from '@/components/traffic/TrafficFunnel';
 import { TrafficSecondaryMetrics } from '@/components/traffic/TrafficSecondaryMetrics';
 import { LeadTemperature } from '@/components/traffic/LeadTemperature';
+import { TrafficBroadcastMetrics } from '@/components/traffic/TrafficBroadcastMetrics';
 import { LandingPagePerformance } from '@/components/traffic/LandingPagePerformance';
 // import { TrafficCharts } from '@/components/traffic/TrafficCharts';
 import { TrafficTables } from '@/components/traffic/TrafficTables';
@@ -17,8 +18,10 @@ import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWi
 
 function DashboardContent() {
     const { refreshData, loading, error, spreadsheetId } = useTraffic();
-    const { launches } = useLaunch();
+    const { launches, loading: launchLoading } = useLaunch();
     const activeLaunch = launches.find(l => l.status === 'Ativo');
+
+    if (launchLoading) return null; // Or a skeleton, preventing flicker
 
     return (
         <div className="space-y-8 pb-10">
@@ -56,8 +59,8 @@ function DashboardContent() {
             )}
 
 
-            {/* General KPIs */}
-            <TrafficKPIs />
+            {/* General KPIs - Only show if NO active launch */}
+            {!activeLaunch && <TrafficKPIs />}
 
             {/* Active Launch Widget */}
             {activeLaunch && (
@@ -76,7 +79,10 @@ function DashboardContent() {
             {/* Main Content */}
             <TrafficFunnel />
             <TrafficSecondaryMetrics />
-            <LeadTemperature />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <LeadTemperature />
+                <TrafficBroadcastMetrics />
+            </div>
             <LandingPagePerformance />
             {/* <TrafficCharts /> */}
             <TrafficTables />
