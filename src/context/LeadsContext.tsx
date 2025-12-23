@@ -95,7 +95,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
 
         } catch (err: any) {
             console.error('Error fetching initial data:', err);
-            // Fallback to empty if error, but don't block app
+            setError(`Erro ao carregar configurações: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -201,8 +201,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 .from('user_settings')
                 .upsert({
                     user_id: user.id,
-                    active_lead_source_id: id,
-                    updated_at: new Date().toISOString()
+                    active_lead_source_id: id
                 }, { onConflict: 'user_id' });
 
             if (error) console.error("Error saving active source setting:", error);
