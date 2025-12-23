@@ -57,6 +57,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     const fetchInitialData = async () => {
         if (!user) return;
         setLoading(true);
+        console.log("fetching initial data for user:", user.id);
         try {
             // 1. Fetch Lead Sources
             const { data: sourcesData, error: sourcesError } = await supabase
@@ -64,7 +65,11 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (sourcesError) throw sourcesError;
+            if (sourcesError) {
+                console.error("Error fetching lead_sources:", sourcesError);
+                throw sourcesError;
+            }
+            console.log("lead_sources fetched:", sourcesData?.length);
 
             const mappedSources: GoogleSheetConfig[] = sourcesData.map(row => ({
                 id: row.id,
@@ -83,13 +88,19 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 .eq('user_id', user.id)
                 .single();
 
+            console.log("user_settings fetched:", settingsData, settingsError);
+
             if (!settingsError && settingsData?.active_lead_source_id) {
                 // Verify if the active source still exists
                 if (mappedSources.find(s => s.id === settingsData.active_lead_source_id)) {
+                    console.log("Setting active launch from DB:", settingsData.active_lead_source_id);
                     setActiveLaunchId(settingsData.active_lead_source_id);
+                } else {
+                    console.warn("Saved active launch ID not found in sources:", settingsData.active_lead_source_id);
                 }
             } else if (mappedSources.length > 0) {
                 // Default to first if no setting
+                console.log("Defaulting to first launch:", mappedSources[0].id);
                 setActiveLaunchId(mappedSources[0].id);
             }
 
@@ -193,6 +204,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
 
     const selectLaunch = async (id: string) => {
         if (!user) return;
+        console.log("Selecting active launch:", id);
         setActiveLaunchId(id);
 
         // Persist selection
@@ -205,6 +217,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
                 }, { onConflict: 'user_id' });
 
             if (error) console.error("Error saving active source setting:", error);
+            else console.log("Active source setting saved to DB");
         } catch (err) {
             console.error("Error saving setting:", err);
         }
