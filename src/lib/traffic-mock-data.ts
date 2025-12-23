@@ -55,6 +55,7 @@ export function generateMockData(): { campaigns: Campaign[]; adSets: AdSet[]; ad
             leads1a1: randomInt(Math.floor(leads * 0.1), Math.floor(leads * 0.3)),
             mandouMsgApi: randomInt(Math.floor(leads * 0.05), Math.floor(leads * 0.15)),
             respondeuPesquisa: randomInt(Math.floor(leads * 0.5), Math.floor(leads * 0.8)),
+            leadsGruposLegados: randomInt(Math.floor(leads * 0.05), Math.floor(leads * 0.2)),
             conversions,
             ctr: (clicks / impressions) * 100,
             cpc: spend / clicks,
