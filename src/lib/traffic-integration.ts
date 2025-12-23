@@ -1,5 +1,6 @@
 import { Ad, AdSet, Campaign } from './traffic-types';
 import { fetchGoogleSheetData } from './google-sheets';
+import { slugify } from './utils';
 
 // Helper to parse currency strings "R$ 1.200,50" -> 1200.50
 const parseCurrency = (val: any): number => {
@@ -63,7 +64,7 @@ export function parseCampaigns(rows: string[][]): Campaign[] {
 
         // Recalculate derived metrics to ensure consistency
         return {
-            id: `cmp-${idx}`, // In lack of a real ID
+            id: `cmp-${slugify(name)}`, // Stable ID based on name
             name: name,
             status: 'active', // Default as not provided in columns
             objective: 'TRAFFIC', // Default

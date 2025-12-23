@@ -128,8 +128,18 @@ export default function LaunchList() {
                                     </div>
                                 </CardContent>
 
-                                <CardFooter className="pt-0">
-                                    <Button variant="ghost" className="w-full text-xs hover:bg-white/5 hover:text-purple-400 justify-between group-hover:translate-x-1 transition-transform">
+                                <CardFooter className="pt-0 flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 text-xs hover:bg-white/5 hover:text-white border-white/10"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/launches/edit/${launch.id}`);
+                                        }}
+                                    >
+                                        Editar
+                                    </Button>
+                                    <Button variant="ghost" className="flex-1 text-xs hover:bg-white/5 hover:text-purple-400 justify-between group-hover:translate-x-1 transition-transform">
                                         Ver Dashboard
                                         <ArrowRight className="h-3 w-3" />
                                     </Button>

@@ -146,8 +146,6 @@ export function LaunchProvider({ children }: { children: React.ReactNode }) {
                     ticket: updates.averageTicket ?? current?.averageTicket
                 };
             }
-            dbPayload.updated_at = new Date().toISOString();
-
             const { error } = await supabase
                 .from('launches')
                 .update(dbPayload)

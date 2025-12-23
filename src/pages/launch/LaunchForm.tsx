@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLaunch } from '@/context/LaunchContext';
 import { useTraffic } from '@/context/TrafficContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,8 @@ import { differenceInDays, parseISO } from 'date-fns';
 
 export default function LaunchForm() {
     const navigate = useNavigate();
-    const { addLaunch } = useLaunch();
+    const { id } = useParams(); // Get ID to edit
+    const { addLaunch, updateLaunch, getLaunchById } = useLaunch();
     const { campaigns } = useTraffic(); // For linking campaigns
 
     // Form State
@@ -43,6 +44,35 @@ export default function LaunchForm() {
 
     // Linked Campaigns
     const [linkedCampaignIds, setLinkedCampaignIds] = useState<string[]>([]);
+
+    // --- Load Data for Editing ---
+    useEffect(() => {
+        if (id) {
+            const launch = getLaunchById(id);
+            if (launch) {
+                setName(launch.name);
+                setDescription(launch.description || '');
+                setType(launch.type);
+                setStatus(launch.status);
+                setStartDate(launch.startDate);
+                setEndDate(launch.endDate);
+                setTotalBudget(launch.totalBudget);
+                setLeadGoal(launch.leadGoal);
+
+                // Set scenarios manually and disable auto-calc initially to respect saved values
+                setCplScenarios(launch.cplScenarios);
+                setAutoCalcCpl(false);
+
+                if (launch.conversionGoal && launch.averageTicket) {
+                    setEnableConversionGoals(true);
+                    setConversionGoal(launch.conversionGoal);
+                    setAverageTicket(launch.averageTicket);
+                }
+
+                setLinkedCampaignIds(launch.linkedCampaignIds || []);
+            }
+        }
+    }, [id, getLaunchById]);
 
     // --- Effects & Calculations ---
 
@@ -100,11 +130,15 @@ export default function LaunchForm() {
         };
 
         try {
-            await addLaunch(launchData);
+            if (id) {
+                await updateLaunch(id, launchData);
+            } else {
+                await addLaunch(launchData);
+            }
             navigate('/launches');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Erro ao salvar lançamento. Verifique o console ou se você está logado.");
+            alert(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
         }
     };
 
@@ -123,7 +157,7 @@ export default function LaunchForm() {
                 </Button>
                 <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                        Novo Lançamento
+                        {id ? 'Editar Lançamento' : 'Novo Lançamento'}
                     </h1>
                     <p className="text-muted-foreground">Planeje suas metas e acompanhe a performance.</p>
                 </div>
