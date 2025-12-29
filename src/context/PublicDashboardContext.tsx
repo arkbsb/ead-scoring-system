@@ -137,6 +137,7 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
                         endDate: launchData.end_date,
                         totalBudget: Number(launchData.total_budget),
                         leadGoal: Number(launchData.lead_goal),
+                        totalLeadGoal: Number(launchData.total_lead_goal || 0),
                         cplScenarios: launchData.cpl_scenarios,
                         conversionGoal: launchData.conversion_goals?.goal,
                         averageTicket: launchData.conversion_goals?.ticket,
