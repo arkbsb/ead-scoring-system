@@ -33,8 +33,8 @@ export function TrafficSheetConfig() {
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setIsOpen(false)} />
-                    <div className="absolute right-0 top-12 w-[350px] p-6 rounded-xl border border-white/10 bg-[#1A1A1A] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+                    <div className="absolute right-0 top-12 w-[350px] p-6 rounded-xl border border-white/10 bg-slate-900 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 opacity-100">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-green-500/10 rounded-lg">

@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getPublicShare, incrementViewCount } from '@/lib/public-share';
-import { parseCampaigns, TrafficSheetParser } from '@/lib/traffic-integration';
+import { TrafficSheetParser } from '@/lib/traffic-integration';
 import { fetchGoogleSheetData } from '@/lib/google-sheets';
-import type { Campaign, AdSet, Ad, DashboardKPIs } from '@/lib/traffic-types';
+import type { Campaign, AdSet, Ad, DashboardKPIs, TrafficMapping } from '@/lib/traffic-types';
+import { DEFAULT_TRAFFIC_MAPPING } from '@/lib/traffic-types';
 import type { Launch } from '@/lib/launch-types';
 
 interface PublicDashboardContextType {
@@ -25,6 +26,7 @@ interface PublicDashboardContextType {
     };
     setFilters: (filters: any) => void;
     filteredCampaigns: Campaign[];
+    trafficMapping: TrafficMapping;
 }
 
 export const PublicDashboardContext = createContext<PublicDashboardContextType | undefined>(undefined);
@@ -33,6 +35,7 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [adSets, setAdSets] = useState<AdSet[]>([]);
     const [ads, setAds] = useState<Ad[]>([]);
+    const [trafficMapping, setTrafficMapping] = useState<TrafficMapping>(DEFAULT_TRAFFIC_MAPPING);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [launch, setLaunch] = useState<Launch | null>(null);
@@ -73,10 +76,12 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
 
             // Fetch traffic data
             if (share.spreadsheet_id) {
-                // ... existing logic ...
+                const mapping = (share.traffic_mapping as TrafficMapping) || DEFAULT_TRAFFIC_MAPPING;
+                setTrafficMapping(mapping);
+
                 try {
                     console.log('Fetching public traffic data...');
-                    const trafficData = await TrafficSheetParser.fetchAndParse(share.spreadsheet_id);
+                    const trafficData = await TrafficSheetParser.fetchAndParse(share.spreadsheet_id, mapping);
                     console.log('Parsed Traffic Data:', trafficData);
                     setCampaigns(trafficData.campaigns);
                     setAdSets(trafficData.adSets);
@@ -84,20 +89,20 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
                 } catch (trafficErr) {
                     console.error("Failed to fetch public traffic data (Main Parser):", trafficErr);
 
-                    // Fallback to minimal fetch if complete fetch fails
+                    // Fallback...
                     try {
                         const sheetData = await fetchGoogleSheetData({
                             id: 'public-traffic',
                             name: 'Public Traffic',
                             spreadsheetId: share.spreadsheet_id,
-                            sheetName: 'Campanhas'
+                            sheetName: mapping.campaigns.sheetName
                         });
 
-                        console.log('Fallback Sheet Data Raw:', sheetData);
-
                         if (sheetData && sheetData.length > 0) {
-                            const parsedCampaigns = parseCampaigns(sheetData);
-                            console.log('Fallback Parsed Campaigns:', parsedCampaigns);
+                            // Import parseCampaigns dynamically or move it to a shared lib if needed, 
+                            // but it's already in traffic-integration.
+                            const { parseCampaigns } = await import('@/lib/traffic-integration');
+                            const parsedCampaigns = parseCampaigns(sheetData, mapping.campaigns.mapping);
                             setCampaigns(parsedCampaigns);
                         }
                     } catch (fallbackErr) {
@@ -256,7 +261,8 @@ export function PublicDashboardProvider({ token, children }: { token: string; ch
             shareInfo,
             filters,
             setFilters,
-            filteredCampaigns
+            filteredCampaigns,
+            trafficMapping
         }}>
             {children}
         </PublicDashboardContext.Provider>

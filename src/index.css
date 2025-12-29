@@ -49,18 +49,17 @@
 
   .dark {
     /* Dark Mode */
-    --background: 240 33% 9%;
-    /* #0F0F1E */
+    --background: 240 33% 8%;
+    /* Slightly deeper #0D0D1A */
     --foreground: 0 0% 100%;
     /* #FFFFFF */
-
-    --card: 240 27% 14%;
-    /* #1A1A2E */
+    --card: 240 25% 12%;
+    /* Solid #161626 */
     --card-foreground: 0 0% 100%;
     /* #FFFFFF */
 
-    --popover: 240 27% 14%;
-    /* #1A1A2E */
+    --popover: 240 25% 12%;
+    /* Solid #161626 */
     --popover-foreground: 0 0% 100%;
     /* #FFFFFF */
 
@@ -72,13 +71,13 @@
     /* #10B981 */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 27% 20%;
-    /* #252541 */
+    --muted: 240 20% 18%;
+    /* Solid #222238 */
     --muted-foreground: 215 16% 69%;
     /* #A0AEC0 */
 
-    --accent: 240 27% 20%;
-    /* #252541 */
+    --accent: 240 20% 18%;
+    /* Solid #222238 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;

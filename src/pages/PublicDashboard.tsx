@@ -11,9 +11,11 @@ import { TrafficTables } from '@/components/traffic/TrafficTables';
 // import { TrafficEngagement } from '@/components/traffic/TrafficEngagement';
 import { Eye, AlertCircle } from 'lucide-react';
 import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWidget';
+import { useTrafficMetrics } from '@/hooks/useTrafficMetrics';
 
 function PublicDashboardContent() {
     const { loading, error, shareInfo, launch, filteredCampaigns } = usePublicDashboard();
+    const { customKPIs } = useTrafficMetrics();
 
     if (loading) {
         return (
@@ -112,7 +114,7 @@ function PublicDashboardContent() {
                                 </div>
                                 <div className="p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50" />
-                                    <LaunchPerformanceWidget launch={launch} campaigns={filteredCampaigns} />
+                                    <LaunchPerformanceWidget launch={launch} campaigns={filteredCampaigns} additionalMetrics={customKPIs} />
                                 </div>
                             </div>
                         )}
@@ -120,7 +122,7 @@ function PublicDashboardContent() {
                         <TrafficFunnel />
                         <TrafficSecondaryMetrics />
                         {/* <TrafficCharts /> */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="flex flex-col gap-8">
                             <LeadTemperature />
                             <TrafficBroadcastMetrics />
                         </div>

@@ -43,7 +43,8 @@ export interface Launch {
 
     // Goals
     totalBudget: number;
-    leadGoal: number;
+    leadGoal: number; // Paid Traffic Goal
+    totalLeadGoal?: number; // Total Leads Goal (Paid + Organic)
 
     // Scenarios
     cplScenarios: CplScenario;

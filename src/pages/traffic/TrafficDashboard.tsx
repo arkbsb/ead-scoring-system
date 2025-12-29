@@ -9,17 +9,21 @@ import { TrafficTables } from '@/components/traffic/TrafficTables';
 // import { TrafficFilters } from '@/components/traffic/TrafficFilters'; // To be implemented later if needed
 import { TrafficSheetConfig } from '@/components/traffic/TrafficSheetConfig';
 import { ShareDashboardButton } from '@/components/traffic/ShareDashboardButton';
+import { DashboardCustomizer } from '@/components/traffic/DashboardCustomizer';
+import { TrafficMapper } from '@/components/traffic/TrafficMapper';
 import { TrafficKPIs } from '@/components/traffic/TrafficKPIs';
 // import { TrafficEngagement } from '@/components/traffic/TrafficEngagement';
 import { RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLaunch } from '@/context/LaunchContext';
 import { LaunchPerformanceWidget } from '@/components/launch/LaunchPerformanceWidget';
+import { useTrafficMetrics } from '@/hooks/useTrafficMetrics';
 
 function DashboardContent() {
-    const { refreshData, loading, error, spreadsheetId } = useTraffic();
+    const { refreshData, loading, error, spreadsheetId, dashboardConfig } = useTraffic();
     const { launches, loading: launchLoading } = useLaunch();
     const activeLaunch = launches.find(l => l.status === 'Ativo');
+    const { customKPIs } = useTrafficMetrics();
 
     if (launchLoading) return null; // Or a skeleton, preventing flicker
 
@@ -36,6 +40,8 @@ function DashboardContent() {
 
                 <div className="flex items-center gap-3">
                     <TrafficSheetConfig />
+                    <TrafficMapper />
+                    <DashboardCustomizer />
                     <ShareDashboardButton spreadsheetId={spreadsheetId} />
                     <button
                         onClick={refreshData}
@@ -59,11 +65,14 @@ function DashboardContent() {
             )}
 
 
-            {/* General KPIs - Only show if NO active launch */}
-            {!activeLaunch && <TrafficKPIs />}
+            {/* General KPIs - Show logic:
+                1. If NO Active Launch -> Show TrafficKPIs (Standard + Custom)
+                2. If Active Launch -> Hide TrafficKPIs, show LaunchWidget (which includes CustomKPIs merged)
+            */}
+            {dashboardConfig.showKPIs && (!activeLaunch || !dashboardConfig.showActiveLaunch) && <TrafficKPIs />}
 
-            {/* Active Launch Widget */}
-            {activeLaunch && (
+            {/* Active Launch Widget (Now includes Custom Metrics merged) */}
+            {activeLaunch && dashboardConfig.showActiveLaunch && (
                 <div className="mb-8 p-6 rounded-xl border border-purple-500/20 bg-purple-500/5 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50" />
                     <div className="flex items-center gap-2 mb-4">
@@ -72,20 +81,24 @@ function DashboardContent() {
                             Lançamento Ativo: {activeLaunch.name}
                         </h2>
                     </div>
-                    <LaunchPerformanceWidget launch={activeLaunch} />
+                    <LaunchPerformanceWidget launch={activeLaunch} additionalMetrics={customKPIs} />
                 </div>
             )}
 
             {/* Main Content */}
-            <TrafficFunnel />
-            <TrafficSecondaryMetrics />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <LeadTemperature />
-                <TrafficBroadcastMetrics />
-            </div>
-            <LandingPagePerformance />
+            {dashboardConfig.showFunnel && <TrafficFunnel />}
+            {dashboardConfig.showSecondaryMetrics && <TrafficSecondaryMetrics />}
+
+            {(dashboardConfig.showLeadTemperature || dashboardConfig.showBroadcastMetrics) && (
+                <div className="flex flex-col gap-8">
+                    {dashboardConfig.showLeadTemperature && <LeadTemperature />}
+                    {dashboardConfig.showBroadcastMetrics && <TrafficBroadcastMetrics />}
+                </div>
+            )}
+
+            {dashboardConfig.showLandingPagePerformance && <LandingPagePerformance />}
             {/* <TrafficCharts /> */}
-            <TrafficTables />
+            {dashboardConfig.showTables && <TrafficTables />}
         </div>
     );
 }

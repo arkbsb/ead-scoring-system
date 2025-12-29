@@ -12,6 +12,7 @@ export interface PublicShare {
     view_count: number;
     last_viewed_at: string | null;
     launch_id?: string | null;
+    traffic_mapping?: any;
 }
 
 /**
@@ -33,7 +34,8 @@ export async function createPublicShare(
     userId: string,
     spreadsheetId: string | null,
     launchId: string | null = null,
-    dashboardType: string = 'traffic'
+    dashboardType: string = 'traffic',
+    trafficMapping: any = null
 ): Promise<{ data: PublicShare | null; error: Error | null }> {
     try {
         const token = generateShareToken();
@@ -46,6 +48,7 @@ export async function createPublicShare(
                 dashboard_type: dashboardType,
                 spreadsheet_id: spreadsheetId,
                 launch_id: launchId,
+                traffic_mapping: trafficMapping,
                 is_active: true
             })
             .select()
@@ -132,6 +135,32 @@ export async function revokePublicShare(
         return { error: null };
     } catch (error) {
         console.error('Error revoking public share:', error);
+        return { error: error as Error };
+    }
+}
+
+/**
+ * Update a public share configuration
+ */
+export async function updatePublicShare(
+    shareId: string,
+    updates: {
+        traffic_mapping?: any;
+        launch_id?: string | null;
+        spreadsheet_id?: string | null;
+    }
+): Promise<{ error: Error | null }> {
+    try {
+        const { error } = await supabase
+            .from('public_dashboards')
+            .update(updates)
+            .eq('id', shareId);
+
+        if (error) throw error;
+
+        return { error: null };
+    } catch (error) {
+        console.error('Error updating public share:', error);
         return { error: error as Error };
     }
 }

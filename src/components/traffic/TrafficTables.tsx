@@ -18,9 +18,10 @@ export function TrafficTables() {
     const [search, setSearch] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'spend', direction: 'desc' });
 
-    const campaigns = context?.campaigns;
-    const adSets = context?.adSets || [];
-    const ads = context?.ads || [];
+    const campaigns = privateContext?.campaigns || publicContext?.campaigns || [];
+    const adSets = privateContext?.adSets || publicContext?.adSets || [];
+    const ads = privateContext?.ads || publicContext?.ads || [];
+    const trafficMapping = privateContext?.trafficMapping;
 
     const sortedData = useMemo(() => {
         let data: any[] = [];
@@ -47,6 +48,17 @@ export function TrafficTables() {
         return data;
     }, [activeTab, campaigns, adSets, ads, search, sortConfig]);
 
+    const currentCustomFields = useMemo(() => {
+        if (!trafficMapping) return [];
+        let fields: any[] = [];
+        if (activeTab === 'campaigns') fields = trafficMapping.campaigns.mapping.customFields || [];
+        if (activeTab === 'adsets') fields = trafficMapping.adSets.mapping.customFields || [];
+        if (activeTab === 'ads') fields = trafficMapping.ads.mapping.customFields || [];
+
+        // Filter to only show fields configured for table display
+        return fields.filter(cf => cf.displaySection === 'table');
+    }, [activeTab, trafficMapping]);
+
     if (!context || context.loading) return null;
 
     const requestSort = (key: string) => {
@@ -69,17 +81,18 @@ export function TrafficTables() {
     const SortableHeader = ({ label, column, align = 'left' }: { label: string, column: string, align?: 'left' | 'right' }) => (
         <th
             className={cn(
-                "px-6 py-4 cursor-pointer hover:bg-white/5 transition-colors select-none group",
+                "px-6 py-4 cursor-pointer hover:bg-white/5 transition-colors select-none group whitespace-nowrap",
                 align === 'right' ? "text-right" : "text-left"
             )}
             onClick={() => requestSort(column)}
         >
-            <div className={cn("flex items-center", align === 'right' && "justify-end")}>
+            <div className={cn("flex items-center gap-1", align === 'right' && "justify-end")}>
                 {label}
                 <SortIcon column={column} />
             </div>
         </th>
     );
+
 
     return (
         <div className="mt-8 space-y-4">
@@ -128,6 +141,9 @@ export function TrafficTables() {
                                 <SortableHeader label="Gasto" column="spend" align="right" />
                                 <SortableHeader label="Leads" column="leads" align="right" />
                                 <SortableHeader label="CPL" column="cpl" align="right" />
+                                {currentCustomFields.map(cf => (
+                                    <SortableHeader key={cf.key} label={cf.label} column={cf.key} align="right" />
+                                ))}
                                 <SortableHeader label="Conv." column="conversions" align="right" />
                             </tr>
                         </thead>
@@ -147,12 +163,19 @@ export function TrafficTables() {
                                     <td className={cn("px-6 py-4 text-right font-mono", item.cpl < 20 ? "text-green-400" : item.cpl > 50 ? "text-red-400" : "text-yellow-400")}>
                                         {formatCurrency(item.cpl)}
                                     </td>
+                                    {currentCustomFields.map(cf => (
+                                        <td key={cf.key} className="px-6 py-4 text-right font-mono text-muted-foreground whitespace-nowrap">
+                                            {typeof item[cf.key] === 'number' && !isNaN(item[cf.key])
+                                                ? item[cf.key].toLocaleString()
+                                                : item[cf.key] || '-'}
+                                        </td>
+                                    ))}
                                     <td className="px-6 py-4 text-right font-mono text-muted-foreground">{item.conversions}</td>
                                 </tr>
                             ))}
                             {sortedData.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-muted-foreground">
+                                    <td colSpan={8 + currentCustomFields.length} className="px-6 py-10 text-center text-muted-foreground">
                                         Nenhum dado encontrado para esta categoria.
                                     </td>
                                 </tr>

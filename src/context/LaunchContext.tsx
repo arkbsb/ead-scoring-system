@@ -42,23 +42,26 @@ export function LaunchProvider({ children }: { children: React.ReactNode }) {
             if (error) throw error;
 
             // Map snake_case DB to camelCase Model
-            const parsedLaunches: Launch[] = (data || []).map(row => ({
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                type: row.type,
-                status: row.status,
-                startDate: row.start_date,
-                endDate: row.end_date,
-                totalBudget: Number(row.total_budget),
-                leadGoal: Number(row.lead_goal),
-                cplScenarios: row.cpl_scenarios,
-                conversionGoal: row.conversion_goals?.goal,
-                averageTicket: row.conversion_goals?.ticket,
-                linkedCampaignIds: row.linked_campaign_ids || [],
-                createdAt: row.created_at,
-                updatedAt: row.updated_at
-            }));
+            const parsedLaunches: Launch[] = (data || []).map(row => {
+                return {
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    type: row.type,
+                    status: row.status,
+                    startDate: row.start_date,
+                    endDate: row.end_date,
+                    totalBudget: Number(row.total_budget),
+                    leadGoal: Number(row.lead_goal),
+                    totalLeadGoal: Number(row.total_lead_goal || 0),
+                    cplScenarios: row.cpl_scenarios,
+                    conversionGoal: row.conversion_goals?.goal,
+                    averageTicket: row.conversion_goals?.ticket,
+                    linkedCampaignIds: row.linked_campaign_ids || [],
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at
+                };
+            });
 
             setLaunches(parsedLaunches);
         } catch (err: any) {
@@ -87,6 +90,7 @@ export function LaunchProvider({ children }: { children: React.ReactNode }) {
                 end_date: launchData.endDate,
                 total_budget: launchData.totalBudget,
                 lead_goal: launchData.leadGoal,
+                total_lead_goal: launchData.totalLeadGoal,
                 cpl_scenarios: launchData.cplScenarios,
                 conversion_goals: launchData.conversionGoal ? {
                     goal: launchData.conversionGoal,
@@ -134,8 +138,9 @@ export function LaunchProvider({ children }: { children: React.ReactNode }) {
             if (updates.status) dbPayload.status = updates.status;
             if (updates.startDate) dbPayload.start_date = updates.startDate;
             if (updates.endDate) dbPayload.end_date = updates.endDate;
-            if (updates.totalBudget) dbPayload.total_budget = updates.totalBudget;
-            if (updates.leadGoal) dbPayload.lead_goal = updates.leadGoal;
+            if (updates.totalBudget !== undefined) dbPayload.total_budget = updates.totalBudget;
+            if (updates.leadGoal !== undefined) dbPayload.lead_goal = updates.leadGoal;
+            if (updates.totalLeadGoal !== undefined) dbPayload.total_lead_goal = updates.totalLeadGoal;
             if (updates.cplScenarios) dbPayload.cpl_scenarios = updates.cplScenarios;
             if (updates.linkedCampaignIds) dbPayload.linked_campaign_ids = updates.linkedCampaignIds;
             if (updates.conversionGoal || updates.averageTicket) {
@@ -146,6 +151,7 @@ export function LaunchProvider({ children }: { children: React.ReactNode }) {
                     ticket: updates.averageTicket ?? current?.averageTicket
                 };
             }
+
             const { error } = await supabase
                 .from('launches')
                 .update(dbPayload)

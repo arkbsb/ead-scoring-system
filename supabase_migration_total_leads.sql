@@ -1,0 +1,2 @@
+ALTER TABLE launches
+ADD COLUMN total_lead_goal INTEGER DEFAULT 0;

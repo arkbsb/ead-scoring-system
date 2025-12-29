@@ -1,6 +1,16 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { Campaign, AdSet, Ad, TrafficFilterState, DashboardKPIs } from '@/lib/traffic-types';
+import {
+    Campaign,
+    AdSet,
+    Ad,
+    TrafficFilterState,
+    DashboardKPIs,
+    DashboardConfig,
+    DEFAULT_DASHBOARD_CONFIG,
+    TrafficMapping,
+    DEFAULT_TRAFFIC_MAPPING
+} from '@/lib/traffic-types';
 import { generateMockData } from '@/lib/traffic-mock-data';
 import { TrafficSheetParser } from '@/lib/traffic-integration';
 import { subDays } from 'date-fns';
@@ -24,6 +34,12 @@ interface TrafficContextType {
     // Calculated
     filteredCampaigns: Campaign[];
     kpis: DashboardKPIs;
+
+    // Config
+    dashboardConfig: DashboardConfig;
+    updateDashboardConfig: (config: DashboardConfig) => Promise<void>;
+    trafficMapping: TrafficMapping;
+    updateTrafficMapping: (mapping: TrafficMapping) => Promise<void>;
 }
 
 export const TrafficContext = createContext<TrafficContextType | undefined>(undefined);
@@ -43,20 +59,48 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             to: new Date()
         }
     });
+    const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>(DEFAULT_DASHBOARD_CONFIG);
+    const [trafficMapping, setTrafficMapping] = useState<TrafficMapping>(DEFAULT_TRAFFIC_MAPPING);
 
     // Fetch stored spreadsheet ID from Supabase
     useEffect(() => {
         const loadSettings = async () => {
             if (!user) return;
             try {
-                const { data, error } = await supabase
+                // 1. Try to get current user's setting
+                const { data: ownData, error: ownError } = await supabase
                     .from('user_settings')
-                    .select('traffic_spreadsheet_id')
+                    .select('traffic_spreadsheet_id, dashboard_config, traffic_mapping')
                     .eq('user_id', user.id)
                     .single();
 
-                if (!error && data?.traffic_spreadsheet_id) {
-                    setSpreadsheetIdState(data.traffic_spreadsheet_id);
+                if (!ownError && ownData) {
+                    if (ownData.traffic_spreadsheet_id) {
+                        setSpreadsheetIdState(ownData.traffic_spreadsheet_id);
+                    }
+                    if (ownData.dashboard_config) {
+                        setDashboardConfig(ownData.dashboard_config as DashboardConfig);
+                    }
+                    if (ownData.traffic_mapping) {
+                        console.log('TrafficContext - Loading traffic_mapping from Supabase:', ownData.traffic_mapping);
+                        setTrafficMapping(ownData.traffic_mapping as TrafficMapping);
+                    } else {
+                        console.log('TrafficContext - No traffic_mapping found in Supabase, using default');
+                    }
+                    if (ownData.traffic_spreadsheet_id) return;
+                }
+
+                // 2. Fallback: Search for any configured ID in the system (since it's a team app)
+                const { data: globalData, error: globalError } = await supabase
+                    .from('user_settings')
+                    .select('traffic_spreadsheet_id')
+                    .not('traffic_spreadsheet_id', 'is', null)
+                    .order('updated_at', { ascending: false })
+                    .limit(1);
+
+                if (!globalError && globalData?.[0]?.traffic_spreadsheet_id) {
+                    console.log("Using shared traffic spreadsheet ID:", globalData[0].traffic_spreadsheet_id);
+                    setSpreadsheetIdState(globalData[0].traffic_spreadsheet_id);
                 }
             } catch (err) {
                 console.error("Failed to load traffic settings:", err);
@@ -77,29 +121,25 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
                 setData({ campaigns: [], adSets: [], ads: [] });
 
                 // Fetch real data
-                const realData = await TrafficSheetParser.fetchAndParse(cleanId);
+                const realData = await TrafficSheetParser.fetchAndParse(cleanId, trafficMapping);
                 console.log("Parsed Data:", realData);
                 setData(realData);
-            } else {
-                // Return to mock if no sheet ID
+            } else if (!user) {
+                // Only show mock to unauthenticated users or if NO data exists at all
                 setTimeout(() => {
                     const mock = generateMockData();
                     setData(mock);
                     setLoading(false);
                 }, 800);
+            } else {
+                // Authenticated user with no ID and No Global Fallback found
+                setData({ campaigns: [], adSets: [], ads: [] });
             }
         } catch (err: any) {
             console.error("Traffic Fetch Error:", err);
             setError(err.message || "Failed to fetch traffic data");
-            // Fallback to mock on error to show something? Or stay empty?
-            // Staying empty + showing error is better for UX debugging
         } finally {
-            if (spreadsheetId && !error) {
-                setLoading(false); // Only unset loading if successful or if handled above
-            }
-            // Ensure loading is false eventually
-            if (!spreadsheetId) setLoading(false);
-            else setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -125,6 +165,52 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             } catch (err) {
                 console.error("Error saving setting:", err);
             }
+        }
+    };
+
+    const updateDashboardConfig = async (config: DashboardConfig) => {
+        setDashboardConfig(config);
+        if (user) {
+            try {
+                const { error } = await supabase
+                    .from('user_settings')
+                    .upsert({
+                        user_id: user.id,
+                        dashboard_config: config,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+
+                if (error) console.error("Error saving dashboard config:", error);
+            } catch (err) {
+                console.error("Error saving dashboard config:", err);
+            }
+        }
+    };
+
+    const updateTrafficMapping = async (mapping: TrafficMapping) => {
+        console.log('TrafficContext - updateTrafficMapping called with:', mapping);
+        setTrafficMapping(mapping);
+        if (user) {
+            try {
+                console.log('TrafficContext - Saving to Supabase for user:', user.id);
+                const { error, data } = await supabase
+                    .from('user_settings')
+                    .upsert({
+                        user_id: user.id,
+                        traffic_mapping: mapping,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+
+                if (error) {
+                    console.error("TrafficContext - Error saving traffic mapping:", error);
+                } else {
+                    console.log("TrafficContext - Successfully saved traffic mapping:", data);
+                }
+            } catch (err) {
+                console.error("TrafficContext - Exception saving traffic mapping:", err);
+            }
+        } else {
+            console.warn('TrafficContext - No user logged in, cannot save to Supabase');
         }
     };
 
@@ -238,7 +324,11 @@ export function TrafficProvider({ children }: { children: React.ReactNode }) {
             spreadsheetId,
             setSpreadsheetId,
             filteredCampaigns,
-            kpis
+            kpis,
+            dashboardConfig,
+            updateDashboardConfig,
+            trafficMapping,
+            updateTrafficMapping
         }}>
             {children}
         </TrafficContext.Provider>

@@ -1,14 +1,39 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { TrafficContext } from '@/context/TrafficContext';
 import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TrendingUp, MousePointer, Zap, Target, Radio } from 'lucide-react';
+import { aggregateCustomField, formatCustomValue } from '@/lib/aggregation-utils';
+import { getIcon, getColorClasses } from '@/lib/icon-utils';
 
 export function TrafficSecondaryMetrics() {
     const publicContext = useContext(PublicDashboardContext);
     const privateContext = useContext(TrafficContext);
     const context = publicContext || privateContext;
+
+    const customSecondaryMetrics = useMemo(() => {
+        if (!privateContext?.trafficMapping) return [];
+
+        const customFields = privateContext.trafficMapping.campaigns.mapping.customFields || [];
+        const secondaryFields = customFields.filter(cf => cf.displaySection === 'secondary');
+
+        return secondaryFields.map(field => {
+            const aggregatedValue = aggregateCustomField(privateContext.filteredCampaigns, field);
+            const formattedValue = formatCustomValue(aggregatedValue, field.format);
+            const Icon = getIcon(field.icon);
+            const colors = getColorClasses(field.color);
+
+            return {
+                label: field.label,
+                value: formattedValue,
+                icon: Icon,
+                color: colors.text,
+                bg: colors.bg,
+                description: `${field.aggregation} - ${field.format}`
+            };
+        });
+    }, [privateContext?.trafficMapping, privateContext?.filteredCampaigns]);
 
     if (!context || context.loading) {
         return (
@@ -65,11 +90,15 @@ export function TrafficSecondaryMetrics() {
             color: 'text-green-400',
             bg: 'bg-green-400/10',
             description: 'Link Clicks → Page Views'
-        }
+        },
+        ...customSecondaryMetrics
     ];
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className={cn(
+            "grid gap-4",
+            secondaryMetrics.length <= 5 ? "grid-cols-2 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
+        )}>
             {secondaryMetrics.map((metric, idx) => (
                 <Card key={idx} className="bg-card/30 backdrop-blur-sm border-white/5 hover:border-primary/20 transition-all">
                     <CardContent className="p-4">

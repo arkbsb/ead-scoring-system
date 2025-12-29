@@ -3,19 +3,23 @@ import { TrafficContext } from '@/context/TrafficContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, Users, Target } from 'lucide-react';
 import { Launch } from '@/lib/launch-types';
+import { MetricItem } from '@/lib/traffic-types';
+import { cn } from '@/lib/utils';
 
 interface LaunchPerformanceWidgetProps {
     launch: Launch;
     campaigns?: any[];
+    additionalMetrics?: MetricItem[];
 }
 
-export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }: LaunchPerformanceWidgetProps) {
+export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns, additionalMetrics = [] }: LaunchPerformanceWidgetProps) {
     const context = useContext(TrafficContext);
     const campaigns = externalCampaigns || context?.filteredCampaigns || context?.campaigns || [];
+    const trafficMapping = context?.trafficMapping;
 
     // Calculate Real Metrics based on Linked Campaigns
     const realMetrics = useMemo(() => {
-        if (!launch || !campaigns || campaigns.length === 0) return { invested: 0, leads: 0, cpl: 0 };
+        if (!launch || !campaigns || campaigns.length === 0) return { invested: 0, leads: 0, totalLeads: 0, cpl: 0 };
 
         // Fallback: If no campaigns are linked, use ALL campaigns from the current dashboard
         // This is useful for public shares where the user expects the global view to match the launch goals
@@ -35,17 +39,32 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
 
         const invested = linkedCampaigns.reduce((acc: number, c: any) => acc + c.spend, 0);
         const leads = linkedCampaigns.reduce((acc: number, c: any) => acc + c.leads, 0);
+
+        // For "TOTAL DE LEADS", we reflect the raw value from the FIRST campaign (line 2 of sheet / index 21) 
+        // as requested by the user, avoiding any summation.
+        const totalLeads = linkedCampaigns[0]?.rawTotalLeads ||
+            (leads + (linkedCampaigns.reduce((acc: number, c: any) => acc + (c.organicLeads || 0), 0)));
+
         const cpl = leads > 0 ? invested / leads : 0;
 
-        return { invested, leads, cpl };
+        return { invested, leads, totalLeads, cpl };
     }, [launch, campaigns]);
 
     // Calculations for UI Percentages
     const budgetPercent = Math.min((realMetrics.invested / launch.totalBudget) * 100, 100);
     const leadsPercent = Math.min((realMetrics.leads / launch.leadGoal) * 100, 100);
+    const totalLeadsPercent = launch.totalLeadGoal ? Math.min((realMetrics.totalLeads / launch.totalLeadGoal) * 100, 100) : 0;
+
+    const totalMetrics = 3 + (launch.totalLeadGoal ? 1 : 0) + additionalMetrics.length;
+    const gridColsClass = totalMetrics === 4 ? "md:grid-cols-2" : "md:grid-cols-3"; // Simplistic grid logic, might need 5->3cols adjustment if not auto
+    // My previous logic: 3->3, 4->2, 5->3, 6->3.
+    // If we have Total Leads, we have 4 standard cards. If 0 custom -> 4 total -> 2x2.
+    // If 1 custom -> 5 total -> 3cols (3, 2).
+    // If 2 custom -> 6 total -> 3cols (3, 3).
+    // So the existing logic "totalMetrics === 4 ? 2 : 3" works for 4 vs 3/5/6/etc.
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className={cn("grid grid-cols-1 gap-6", gridColsClass)}>
             {/* 1. Investment Card */}
             <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
@@ -60,7 +79,7 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
                         R$ {realMetrics.invested.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground mb-3">
-                        <span>Meta: R$ {launch.totalBudget.toLocaleString('pt-BR')}</span>
+                        <span>Meta: R$ {(launch.totalBudget || 0).toLocaleString('pt-BR')}</span>
                         <span className={budgetPercent > 90 ? "text-red-400" : "text-green-400"}>
                             {budgetPercent.toFixed(1)}% usado
                         </span>
@@ -72,17 +91,17 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
                         />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Restam: <span className="text-white font-medium">R$ {(launch.totalBudget - realMetrics.invested).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        Restam: <span className="text-white font-medium">R$ {(Math.max(0, (launch.totalBudget || 0) - realMetrics.invested)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </p>
                 </CardContent>
             </Card>
 
-            {/* 2. Leads Card */}
+            {/* 2. Paid Leads Card */}
             <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between">
-                        <span>LEADS CAPTADOS</span>
+                        <span>LEADS (PAGO)</span>
                         <Users className="h-4 w-4 text-blue-400" />
                     </CardTitle>
                 </CardHeader>
@@ -91,7 +110,7 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
                         {realMetrics.leads.toLocaleString('pt-BR')}
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground mb-3">
-                        <span>Meta: {launch.leadGoal.toLocaleString('pt-BR')}</span>
+                        <span>Meta: {(launch.leadGoal || 0).toLocaleString('pt-BR')}</span>
                         <span className={leadsPercent >= 100 ? "text-green-400" : "text-blue-400"}>
                             {leadsPercent.toFixed(1)}% da meta
                         </span>
@@ -103,10 +122,43 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
                         />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Faltam: <span className="text-white font-medium">{Math.max(0, launch.leadGoal - realMetrics.leads).toLocaleString('pt-BR')} leads</span>
+                        Faltam: <span className="text-white font-medium">{Math.max(0, (launch.leadGoal || 0) - realMetrics.leads).toLocaleString('pt-BR')} leads</span>
                     </p>
                 </CardContent>
             </Card>
+
+            {/* 3. Total Leads Card (Optional if goal set) */}
+            {(launch.totalLeadGoal || 0) > 0 && (
+                <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between">
+                            <span>LEADS (TOTAL)</span>
+                            <Users className="h-4 w-4 text-emerald-400" />
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-white mb-1">
+                            {realMetrics.totalLeads.toLocaleString('pt-BR')}
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground mb-3">
+                            <span>Meta: {(launch.totalLeadGoal || 0).toLocaleString('pt-BR')}</span>
+                            <span className={totalLeadsPercent >= 100 ? "text-green-400" : "text-emerald-400"}>
+                                {totalLeadsPercent.toFixed(1)}% da meta
+                            </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2">
+                            <div
+                                className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                                style={{ width: `${totalLeadsPercent}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Faltam: <span className="text-white font-medium">{Math.max(0, (launch.totalLeadGoal || 0) - realMetrics.totalLeads).toLocaleString('pt-BR')} leads</span>
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* 3. CPL Card */}
             <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-lg relative overflow-hidden">
@@ -154,6 +206,38 @@ export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns }
                     </div>
                 </CardContent>
             </Card>
-        </div>
+
+            {/* Additional Metrics (Custom Fields) */}
+            {
+                additionalMetrics.map((metric, idx) => (
+                    <Card key={`extra-${idx}`} className="bg-black/40 backdrop-blur-xl border-white/10 shadow-lg relative overflow-hidden">
+                        <div className={cn("absolute top-0 left-0 w-1 h-full", metric.bg.replace('/10', ''))} style={{ backgroundColor: metric.color.includes('text') ? undefined : 'currentColor' }} />
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground flex justify-between">
+                                <span>{metric.label.toUpperCase()}</span>
+                                <metric.icon className={cn("h-4 w-4", metric.color)} />
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white mb-1">
+                                {metric.value}
+                            </div>
+                            {metric.change && (
+                                <div className="flex justify-between text-xs text-muted-foreground mb-3">
+                                    <span>Variação</span>
+                                    <span className={cn(metric.changeColor)}>
+                                        {metric.change}
+                                    </span>
+                                </div>
+                            )}
+                            {/* Placeholder progress bar for visual consistency if needed, or remove */}
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden mb-2 mt-4 opacity-50">
+                                <div className={cn("h-full rounded-full w-full opacity-30", metric.bg.replace('/10', ''))} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))
+            }
+        </div >
     );
 }

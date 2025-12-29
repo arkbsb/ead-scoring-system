@@ -11,6 +11,14 @@ import { Calendar, Save, ArrowLeft, Target, Wallet, TrendingUp, Link as LinkIcon
 import { Launch, LaunchType, LaunchStatus, CplScenario } from '@/lib/launch-types';
 import { differenceInDays, parseISO } from 'date-fns';
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
 export default function LaunchForm() {
     const navigate = useNavigate();
     const { id } = useParams(); // Get ID to edit
@@ -28,6 +36,7 @@ export default function LaunchForm() {
     // Budget & Goals
     const [totalBudget, setTotalBudget] = useState<number>(0);
     const [leadGoal, setLeadGoal] = useState<number>(0);
+    const [totalLeadGoal, setTotalLeadGoal] = useState<number>(0);
 
     // CPL Scenarios
     const [autoCalcCpl, setAutoCalcCpl] = useState(true);
@@ -58,6 +67,7 @@ export default function LaunchForm() {
                 setEndDate(launch.endDate);
                 setTotalBudget(launch.totalBudget);
                 setLeadGoal(launch.leadGoal);
+                setTotalLeadGoal(launch.totalLeadGoal || 0);
 
                 // Set scenarios manually and disable auto-calc initially to respect saved values
                 setCplScenarios(launch.cplScenarios);
@@ -123,6 +133,7 @@ export default function LaunchForm() {
             endDate,
             totalBudget,
             leadGoal,
+            totalLeadGoal,
             cplScenarios,
             conversionGoal: enableConversionGoals ? conversionGoal : undefined,
             averageTicket: enableConversionGoals ? averageTicket : undefined,
@@ -189,31 +200,39 @@ export default function LaunchForm() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Tipo</Label>
-                                    <select
-                                        className="w-full bg-black/20 border border-white/10 rounded-md p-2 text-sm"
+                                    <Select
                                         value={type}
-                                        onChange={(e) => setType(e.target.value as LaunchType)}
+                                        onValueChange={(val) => setType(val as LaunchType)}
                                     >
-                                        <option value="Webinar">Webinar</option>
-                                        <option value="Masterclass">Masterclass</option>
-                                        <option value="Mentoria">Mentoria</option>
-                                        <option value="Curso">Curso Online</option>
-                                        <option value="Desafio">Desafio</option>
-                                        <option value="Outro">Outro</option>
-                                    </select>
+                                        <SelectTrigger className="w-full bg-black/20 border-white/10">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Webinar">Webinar</SelectItem>
+                                            <SelectItem value="Masterclass">Masterclass</SelectItem>
+                                            <SelectItem value="Mentoria">Mentoria</SelectItem>
+                                            <SelectItem value="Curso">Curso Online</SelectItem>
+                                            <SelectItem value="Desafio">Desafio</SelectItem>
+                                            <SelectItem value="Outro">Outro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Status</Label>
-                                    <select
-                                        className="w-full bg-black/20 border border-white/10 rounded-md p-2 text-sm"
+                                    <Select
                                         value={status}
-                                        onChange={(e) => setStatus(e.target.value as LaunchStatus)}
+                                        onValueChange={(val) => setStatus(val as LaunchStatus)}
                                     >
-                                        <option value="Planejamento">Planejamento</option>
-                                        <option value="Ativo">Ativo</option>
-                                        <option value="Pausado">Pausado</option>
-                                        <option value="Finalizado">Finalizado</option>
-                                    </select>
+                                        <SelectTrigger className="w-full bg-black/20 border-white/10">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Planejamento">Planejamento</SelectItem>
+                                            <SelectItem value="Ativo">Ativo</SelectItem>
+                                            <SelectItem value="Pausado">Pausado</SelectItem>
+                                            <SelectItem value="Finalizado">Finalizado</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
@@ -294,12 +313,22 @@ export default function LaunchForm() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
-                                <Label>Meta de Leads Total *</Label>
+                                <Label>Meta de Leads (Tráfego Pago) *</Label>
                                 <Input
                                     type="number"
                                     placeholder="0"
                                     value={leadGoal || ''}
                                     onChange={e => setLeadGoal(parseInt(e.target.value))}
+                                    className="bg-white/5 border-white/10"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Meta de Leads Total (Pago + Orgânico)</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="0"
+                                    value={totalLeadGoal || ''}
+                                    onChange={e => setTotalLeadGoal(parseInt(e.target.value))}
                                     className="bg-white/5 border-white/10"
                                 />
                             </div>
@@ -487,8 +516,12 @@ export default function LaunchForm() {
                         <CardContent className="space-y-6">
                             <div className="space-y-4">
                                 <div>
-                                    <span className="text-xs text-muted-foreground uppercase">Meta de Leads</span>
+                                    <span className="text-xs text-muted-foreground uppercase">Meta Leads (Pago)</span>
                                     <div className="text-2xl font-bold">{leadGoal.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-muted-foreground uppercase">Meta Leads (Total)</span>
+                                    <div className="text-2xl font-bold text-purple-400">{(totalLeadGoal || leadGoal).toLocaleString()}</div>
                                 </div>
                                 <div>
                                     <span className="text-xs text-muted-foreground uppercase">Budget Total</span>
@@ -514,6 +547,6 @@ export default function LaunchForm() {
                     </Card>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

@@ -20,10 +20,10 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-[#1A1A2E] border border-border shadow-2xl animate-fade-in custom-scrollbar">
+            <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-border shadow-2xl animate-fade-in custom-scrollbar opacity-100">
 
                 {/* Header */}
-                <div className="sticky top-0 z-10 flex items-start justify-between p-6 bg-white/95 dark:bg-[#1A1A2E]/95 backdrop-blur border-b border-border">
+                <div className="sticky top-0 z-10 flex items-start justify-between p-6 bg-white dark:bg-slate-900 border-b border-border opacity-100">
                     <div>
                         <h2 className="text-2xl font-display font-bold text-foreground">{lead.name}</h2>
                         <div className="flex items-center gap-3 mt-2">

@@ -8,6 +8,16 @@ import { Loader2, ChevronDown, AlertCircle, Plus, Trash2, Target } from 'lucide-
 // Simplified Select for native usage if shadcn components are complex to setup perfectly in one go
 // Using standard HTML select with Tailwind classes for robustness
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    SelectGroup,
+    SelectLabel
+} from '@/components/ui/select';
+
 const AVAILABLE_FIELDS: { value: keyof Lead | 'ignore', label: string, isScorable: boolean }[] = [
     { value: 'ignore', label: 'Ignorar Coluna', isScorable: false },
     { value: 'name', label: 'Nome Completo', isScorable: false },
@@ -119,21 +129,21 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
 
     return (
         <Card className="border-primary/20 shadow-lg">
-            <CardHeader className="border-b bg-muted/20">
+            <CardHeader className="border-b bg-slate-900/40">
                 <CardTitle>Mapeamento de Dados</CardTitle>
                 <CardDescription>Vincule as colunas da planilha aos campos do sistema e defina a pontuação.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 <div className="max-h-[600px] overflow-y-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-muted text-muted-foreground font-medium">
+                        <thead className="bg-slate-900 text-muted-foreground font-medium sticky top-0 z-10">
                             <tr>
                                 <th className="p-4 text-left">Coluna na Planilha</th>
                                 <th className="p-4 text-left">Campo no Sistema</th>
                                 <th className="p-4 text-left">Pontuação</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-border bg-card/20">
                             {mappings.map((map, index) => {
                                 const fieldConfig = AVAILABLE_FIELDS.find(f => f.value === map.targetField);
                                 return (
@@ -144,26 +154,31 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                 Ex: {sampleData[0]?.[index] || '-'}
                                             </p>
                                         </td>
-                                        <td className="p-4 w-[30%]">
+                                        <td className="p-4 w-[30%] text-foreground">
                                             {AVAILABLE_FIELDS.some(f => f.value === map.targetField) ? (
-                                                <select
-                                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                                    value={map.targetField}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === '__custom__') {
-                                                            // Switch to custom mode, defaulting to a sanitized header name or empty
+                                                <Select
+                                                    value={map.targetField as string}
+                                                    onValueChange={(val) => {
+                                                        if (val === '__custom__') {
                                                             const suggested = map.headerName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
                                                             handleFieldChange(index, suggested || 'novo_campo');
                                                         } else {
-                                                            handleFieldChange(index, e.target.value);
+                                                            handleFieldChange(index, val);
                                                         }
                                                     }}
                                                 >
-                                                    {AVAILABLE_FIELDS.map(f => (
-                                                        <option key={f.value} value={f.value}>{f.label}</option>
-                                                    ))}
-                                                    <option value="__custom__" className="font-bold text-primary">+ Criar novo campo...</option>
-                                                </select>
+                                                    <SelectTrigger className="w-full h-9 bg-background">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            {AVAILABLE_FIELDS.map(f => (
+                                                                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                                            ))}
+                                                            <SelectItem value="__custom__" className="font-bold text-primary">+ Criar novo campo...</SelectItem>
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
                                             ) : (
                                                 <div className="flex items-center gap-2">
                                                     <input
@@ -246,11 +261,23 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                                     </div>
                                                                     <div className="space-y-1">
                                                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Tipo</label>
-                                                                        <select id={`new-type-${index}`} className="w-full h-8 rounded border border-input px-1 text-xs bg-background">
-                                                                            <option value="equals">Igual</option>
-                                                                            <option value="contains">Contém</option>
-                                                                            <option value="not_empty">Preenchido</option>
-                                                                        </select>
+                                                                        <Select
+                                                                            defaultValue="equals"
+                                                                            onValueChange={(val) => {
+                                                                                const typeInput = document.getElementById(`new-type-${index}`) as HTMLInputElement;
+                                                                                if (typeInput) typeInput.value = val;
+                                                                            }}
+                                                                        >
+                                                                            <SelectTrigger className="w-full h-8 text-[10px] bg-background">
+                                                                                <SelectValue />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                <SelectItem value="equals">Igual</SelectItem>
+                                                                                <SelectItem value="contains">Contém</SelectItem>
+                                                                                <SelectItem value="not_empty">Preenchido</SelectItem>
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                        <input type="hidden" id={`new-type-${index}`} value="equals" />
                                                                     </div>
                                                                     <div className="space-y-1">
                                                                         <label className="text-[10px] uppercase font-bold text-muted-foreground">Pts</label>

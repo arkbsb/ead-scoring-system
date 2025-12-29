@@ -6,6 +6,7 @@ import { Share2, Copy, Check, Trash2, RefreshCw } from 'lucide-react';
 import { createPublicShare, getUserActiveShare, revokePublicShare, getPublicShareUrl } from '@/lib/public-share';
 import type { PublicShare } from '@/lib/public-share';
 import { useLaunch } from '@/context/LaunchContext';
+import { useTraffic } from '@/context/TrafficContext';
 
 interface ShareDashboardButtonProps {
     spreadsheetId: string | null;
@@ -15,6 +16,7 @@ export function ShareDashboardButton({ spreadsheetId }: ShareDashboardButtonProp
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
     const [activeShare, setActiveShare] = useState<PublicShare | null>(null);
+    const { trafficMapping } = useTraffic();
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -43,7 +45,9 @@ export function ShareDashboardButton({ spreadsheetId }: ShareDashboardButtonProp
         const { data, error } = await createPublicShare(
             user.id,
             spreadsheetId,
-            activeLaunch?.id || null
+            activeLaunch?.id || null,
+            'traffic',
+            trafficMapping
         );
 
         if (error) {
@@ -53,6 +57,49 @@ export function ShareDashboardButton({ spreadsheetId }: ShareDashboardButtonProp
         } else {
             setActiveShare(data);
         }
+        setLoading(false);
+    };
+
+    const handleUpdateShare = async () => {
+        if (!activeShare) return;
+
+        setLoading(true);
+        // We can reuse createPublicShare logic but we might want a specific update function
+        // For now, revoking and recreating generates a new token which invalidates the old link. 
+        // We should add an UPDATE function to public-share.ts, but for quick fix, 
+        // let's just revoke/recreate OR better: update traffic_mapping column directly via supabase client here
+        // actually, createPublicShare is for NEW shares. Let's use supabase client directly here for simplicity
+
+        try {
+            // Import supabase dynamically or from context? We don't have supabase client in scope...
+            // Wait, we can use the import from public-share if we export it, or just add updatePublicShare to lib
+            // Let's modify public-share.ts to export an update function first.
+            // actually, I can just use the createPublicShare logic but I'll update public-share.ts properly first.
+            // Wait, I cannot edit public-share.ts in the same step.
+            // I'll assume I will add updatePublicShare in the next step or use a workaround.
+            // Workaround: I'll use the createPublicShare logic but that creates a NEW token. Not good for existing links.
+
+            // Let's assume I'll add `updatePublicShare` to '@/lib/public-share' in next step.
+            const { updatePublicShare } = await import('@/lib/public-share');
+
+            const { error } = await updatePublicShare(
+                activeShare.id,
+                {
+                    traffic_mapping: trafficMapping,
+                    launch_id: activeLaunch?.id || null,
+                    spreadsheet_id: spreadsheetId
+                }
+            );
+
+            if (error) throw error;
+
+            alert('Link atualizado com as novas configurações!');
+            loadActiveShare(); // reload to get fresh data
+        } catch (err) {
+            console.error('Update share error:', err);
+            alert('Erro ao atualizar link');
+        }
+
         setLoading(false);
     };
 
@@ -158,6 +205,21 @@ export function ShareDashboardButton({ spreadsheetId }: ShareDashboardButtonProp
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Revogar Link
                                 </Button>
+
+                                <div className="pt-2 border-t mt-4">
+                                    <p className="text-xs text-muted-foreground mb-2 text-center">
+                                        Fez alteração nas colunas ou no lançamento ativo?
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleUpdateShare}
+                                        className="w-full text-xs h-8 border-dashed"
+                                    >
+                                        <RefreshCw className="h-3 w-3 mr-2" />
+                                        Atualizar Configurações do Link
+                                    </Button>
+                                </div>
                             </div>
                         </>
                     ) : (

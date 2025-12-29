@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { AdvancedFilterState, FilterRule } from '@/lib/types';
 import { Plus, Filter, Search, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 
 const AVAILABLE_MATCH_TYPES = [
     { value: 'equals', label: 'Igual a' },
@@ -123,16 +124,20 @@ export function FilterBar({ filters, setFilters, availableFields }: FilterBarPro
                     {/* Quick Segmentation */}
                     <div className="md:col-span-4 space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</label>
-                        <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        <Select
                             value={filters.segmentation}
-                            onChange={(e) => setFilters(prev => ({ ...prev, segmentation: e.target.value }))}
+                            onValueChange={(val) => setFilters(prev => ({ ...prev, segmentation: val }))}
                         >
-                            <option value="all">Todos os Status</option>
-                            <option value="Super Qualificado">Super Qualificado</option>
-                            <option value="Qualificado">Qualificado</option>
-                            <option value="Não Qualificado">Não Qualificado</option>
-                        </select>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Todos os Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Status</SelectItem>
+                                <SelectItem value="Super Qualificado">Super Qualificado</SelectItem>
+                                <SelectItem value="Qualificado">Qualificado</SelectItem>
+                                <SelectItem value="Não Qualificado">Não Qualificado</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
@@ -162,40 +167,50 @@ export function FilterBar({ filters, setFilters, availableFields }: FilterBarPro
                                     <div key={rule.id} className="flex gap-2 items-center bg-muted/30 p-2 rounded-lg border border-border group">
 
                                         {/* Field Selector */}
-                                        <select
-                                            className="h-9 w-[200px] rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                        <Select
                                             value={rule.field}
-                                            onChange={(e) => updateRule(rule.id, { field: e.target.value })}
+                                            onValueChange={(val) => updateRule(rule.id, { field: val })}
                                         >
-                                            <optgroup label="Dados Padrão">
-                                                <option value="utm_source">Origem (UTM Source)</option>
-                                                <option value="utm_medium">Mídia (UTM Medium)</option>
-                                                <option value="utm_campaign">Campanha (UTM Campaign)</option>
-                                                <option value="age">Idade</option>
-                                                <option value="hasChildren">Tem Filhos</option>
-                                                <option value="hasStore">Tem Loja</option>
-                                                <option value="revenue">Faturamento</option>
-                                            </optgroup>
-                                            <optgroup label="Todos os Campos">
-                                                {availableFields
-                                                    .filter(f => !['id', 'score', 'segmentation', 'timestamp'].includes(f))
-                                                    .sort()
-                                                    .map(field => (
-                                                        <option key={field} value={field}>{field}</option>
-                                                    ))}
-                                            </optgroup>
-                                        </select>
+                                            <SelectTrigger className="w-[200px] h-9">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Dados Padrão</SelectLabel>
+                                                    <SelectItem value="utm_source">Origem (UTM Source)</SelectItem>
+                                                    <SelectItem value="utm_medium">Mídia (UTM Medium)</SelectItem>
+                                                    <SelectItem value="utm_campaign">Campanha (UTM Campaign)</SelectItem>
+                                                    <SelectItem value="age">Idade</SelectItem>
+                                                    <SelectItem value="hasChildren">Tem Filhos</SelectItem>
+                                                    <SelectItem value="hasStore">Tem Loja</SelectItem>
+                                                    <SelectItem value="revenue">Faturamento</SelectItem>
+                                                </SelectGroup>
+                                                <SelectGroup>
+                                                    <SelectLabel>Todos os Campos</SelectLabel>
+                                                    {availableFields
+                                                        .filter(f => !['id', 'score', 'segmentation', 'timestamp'].includes(f))
+                                                        .sort()
+                                                        .map(field => (
+                                                            <SelectItem key={field} value={field}>{field}</SelectItem>
+                                                        ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
 
                                         {/* Operator Selector */}
-                                        <select
-                                            className="h-9 w-[150px] rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                        <Select
                                             value={rule.matchType}
-                                            onChange={(e) => updateRule(rule.id, { matchType: e.target.value as any })}
+                                            onValueChange={(val) => updateRule(rule.id, { matchType: val as any })}
                                         >
-                                            {AVAILABLE_MATCH_TYPES.map(m => (
-                                                <option key={m.value} value={m.value}>{m.label}</option>
-                                            ))}
-                                        </select>
+                                            <SelectTrigger className="w-[150px] h-9">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {AVAILABLE_MATCH_TYPES.map(m => (
+                                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
 
                                         {/* Value Input */}
                                         <Input
