@@ -15,7 +15,6 @@ interface LaunchPerformanceWidgetProps {
 export function LaunchPerformanceWidget({ launch, campaigns: externalCampaigns, additionalMetrics = [] }: LaunchPerformanceWidgetProps) {
     const context = useContext(TrafficContext);
     const campaigns = externalCampaigns || context?.filteredCampaigns || context?.campaigns || [];
-    const trafficMapping = context?.trafficMapping;
 
     // Calculate Real Metrics based on Linked Campaigns
     const realMetrics = useMemo(() => {

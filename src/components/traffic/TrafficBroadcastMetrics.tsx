@@ -1,4 +1,5 @@
 import { useContext, useMemo } from 'react';
+import { CustomField } from '@/lib/traffic-types';
 import { TrafficContext } from '@/context/TrafficContext';
 import { PublicDashboardContext } from '@/context/PublicDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,9 +45,9 @@ export function TrafficBroadcastMetrics() {
         if (!mapping) return [];
 
         const customFields = mapping.campaigns.mapping.customFields || [];
-        const sourceFields = customFields.filter(cf => cf.displaySection === 'sources');
+        const sourceFields = customFields.filter((cf: CustomField) => cf.displaySection === 'sources');
 
-        return sourceFields.map(field => {
+        return sourceFields.map((field: CustomField) => {
             const aggregatedValue = aggregateCustomField(filteredCampaigns, field);
             const formattedValue = formatCustomValue(aggregatedValue, field.format);
             const Icon = getIcon(field.icon);
@@ -73,7 +74,7 @@ export function TrafficBroadcastMetrics() {
 
     const { kpis } = context;
     const totalSpecificLeads = kpis.totalLeads1a1 + kpis.totalLeadsGruposLegados +
-        customSourceMetrics.reduce((acc, m) => acc + m.rawValue, 0);
+        customSourceMetrics.reduce((acc: number, m: any) => acc + m.rawValue, 0);
 
     const allSourceMetrics = [
         {

@@ -127,6 +127,7 @@ export function generateMockData(): { campaigns: Campaign[]; adSets: AdSet[]; ad
                     name: `Ad ${a} - ${['Benefit Hook', 'Social Proof', 'Urgency'][randomInt(0, 2)]}`,
                     status: Math.random() > 0.2 ? 'active' : 'paused',
                     format: AD_FORMATS[randomInt(0, 2)],
+                    startDate: adSet.startDate,
                     impressions: aImpressions,
                     reach: Math.floor(aImpressions * 0.95),
                     clicks: aClicks,

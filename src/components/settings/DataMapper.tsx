@@ -14,8 +14,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    SelectGroup,
-    SelectLabel
+    SelectGroup
 } from '@/components/ui/select';
 
 const AVAILABLE_FIELDS: { value: keyof Lead | 'ignore', label: string, isScorable: boolean }[] = [
@@ -173,7 +172,7 @@ export function DataMapper({ config, onSave, onCancel }: { config: GoogleSheetCo
                                                     <SelectContent>
                                                         <SelectGroup>
                                                             {AVAILABLE_FIELDS.map(f => (
-                                                                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                                                <SelectItem key={String(f.value)} value={String(f.value)}>{f.label}</SelectItem>
                                                             ))}
                                                             <SelectItem value="__custom__" className="font-bold text-primary">+ Criar novo campo...</SelectItem>
                                                         </SelectGroup>
